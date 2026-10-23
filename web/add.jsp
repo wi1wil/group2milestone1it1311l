@@ -50,6 +50,5 @@
         </form>
         <a href='index.jsp'>Return</a>
         
-        <!--I changed something here-->
     </body>
 </html>
