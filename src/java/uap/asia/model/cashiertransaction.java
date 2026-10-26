@@ -33,6 +33,18 @@ public class cashiertransaction extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         // Builds the whole HTML page; used by both GET and POST
+        
+        HttpSession session = request.getSession(false);
+        
+        String action = request.getParameter("actionbtn");
+        boolean isValid = true;
+        if (session == null) {
+            isValid = false;            
+            if (action.equals("Dummy")) {
+                isValid = true;
+            }
+        }
+        
         response.setContentType("text/html;charset=UTF-8");
         try (PrintWriter out = response.getWriter()) {
             out.println("<!DOCTYPE html>");
@@ -43,6 +55,28 @@ public class cashiertransaction extends HttpServlet {
             out.println("</head>");
             out.println("<body>");
 
+            if (isValid) {
+                switch(action) {
+                    case "Next":
+                        response.sendRedirect("cashier.jsp");
+                        break;
+                        
+                    case "Done":
+                        response.sendRedirect("index.jsp");
+                        break;
+                    case "Delete":
+                        if (session != null) session.invalidate();
+                        response.sendRedirect("cashier.jsp");
+                        break;
+                    case "Dummy":                        
+                        session = request.getSession();
+                        response.sendRedirect("cashier.jsp?debugmode=thisisandreimartinwilson");
+                        break;
+                    default:
+                        response.sendRedirect("login.jsp");
+                }               
+            }
+            /*
             // Cancel button was pressed
             if (request.getParameter("cancelbtn") != null) {
                 out.println("<h1>Transaction cancelled</h1>");
@@ -51,6 +85,7 @@ public class cashiertransaction extends HttpServlet {
             out.println("</html>");
                 return;
             }
+            */
 
             // Read the form fields
             String id = request.getParameter("productid");
