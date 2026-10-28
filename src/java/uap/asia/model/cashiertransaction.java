@@ -39,7 +39,9 @@ public class cashiertransaction extends HttpServlet {
         String action = request.getParameter("actionbtn");
         boolean isValid = true;
         if (session == null) {
-            isValid = false;            
+            isValid = false;
+            
+            // Debugging: Create a dummy session
             if (action.equals("Dummy")) {
                 isValid = true;
             }
@@ -93,6 +95,20 @@ public class cashiertransaction extends HttpServlet {
             String qtyText = request.getParameter("productquantity");
             String discountText = request.getParameter("discount");
             String paidText = request.getParameter("paid");
+            
+            // create java object (productsOnCart) for each item
+            
+            /*
+            ArrayList (UNPAID) of said OBJECT
+            OBJECT receives: PRODUCT ID, PRICE, QUANTITY BOUGHT, DISCOUNT
+            OBJECT stored in ArrayList (UNPAID)
+            RECEIVE payment
+            ONCE SECURED, transfer obect from ArrayList (UNPAID) to ArrayList (PAID)
+                INCLUDES:
+                    decreament stock/quantity
+                    add to sales, sales_items
+                    
+            */
 
             // Stop if the page was opened directly, without the form data
             if (id == null || priceText == null || qtyText == null) {
