@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.sql.*;
 
 /**
  *
@@ -38,17 +39,10 @@ public class createpurchaseorder extends HttpServlet {
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
-            out.println("<title>Purchase Order Result</title>");
+            out.println("<title>Create Purchase Order Result</title>");
             out.println("<link rel=\"stylesheet\" href=\"css/style.css\">");
             out.println("</head>");
             out.println("<body>");
-
-            // Temporary product data (same list as tempdata.java), replace with a database later
-            String[] ids = {"CPU-001", "CPU-002", "MB-001", "MB-002", "RAM-001", "RAM-002", "GPU-001", "SSD-001", "PSU-001", "CASE-001", "COOL-001"};
-            String[] names = {"AMD Ryzen 5 7600", "Intel Core i5-12400F", "ASRock B650M Pro RS", "MSI PRO B660M-A DDR4", "Kingston Fury 16GB DDR5-5600", "Corsair Vengeance 16GB DDR4-3200", "RTX 4060 8GB", "Samsung 980 1TB", "Corsair CV650 650W", "Tecware Forge M2 (mATX)", "Deepcool AK400"};
-            String[] categories = {"CPU", "CPU", "Motherboard", "Motherboard", "RAM", "RAM", "GPU", "Storage", "Power Supply", "Case", "CPU Cooler"};
-            double[] prices = {12500, 8900, 8200, 6900, 3200, 2300, 19500, 4200, 3800, 2900, 1500};
-            int[] stocks = {15, 3, 8, 4, 20, 2, 6, 12, 9, 5, 10};
 
             // Read the form fields
             String supplier = request.getParameter("supplier");
@@ -63,6 +57,23 @@ public class createpurchaseorder extends HttpServlet {
                 out.println("</html>");
                 return;
             }
+            supplier = supplier.trim();
+            id = id.trim();
+
+            // The database keeps which employee created the order, so the user must be logged in
+            HttpSession session = request.getSession(false);
+            Integer employeeId = null;
+            if (session != null) {
+                employeeId = (Integer) session.getAttribute("e_id");
+            }
+            if (employeeId == null) {
+                out.println("<h1>Purchase order not created</h1>");
+                out.println("<p>Please login as an employee first.</p>");
+                out.println("<a href='login.jsp'>Go to Login</a>");
+                out.println("</body>");
+                out.println("</html>");
+                return;
+            }
 
             // Convert quantity to a number (0 if invalid)
             int qty = 0;
@@ -72,35 +83,122 @@ public class createpurchaseorder extends HttpServlet {
                 qty = 0;
             }
 
-            // Find the product ID in the list (-1 means not found)
-            int found = -1;
-            for (int i = 0; i < ids.length; i++) {
-                if (ids[i].equalsIgnoreCase(id.trim())) {
-                    found = i;
+            // order = { PO no, product name, estimated cost }, or null when the order was not saved
+            String[] order = null;
+            String problem = "";
+
+            // Validate, then save the order
+            if (supplier.isEmpty() || id.isEmpty()) {
+                problem = "Supplier and product ID are required.";
+            } else if (qty <= 0) {
+                problem = "Quantity must be a whole number of at least 1.";
+            } else {
+                try {
+                    order = savePurchaseOrder(supplier, id, qty, employeeId);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    problem = "Could not save to the database. Please try again.";
+                }
+                // When nothing was saved, order[0] is not used; the reason is in problem
+                if (order != null && order[0].isEmpty()) {
+                    problem = order[1];
+                    order = null;
                 }
             }
 
-            // Validate quantity, then show the order (not saved yet)
-            if (qty <= 0) {
+            if (order == null) {
                 out.println("<h1>Purchase order not created</h1>");
-                out.println("<p>Quantity must be a whole number of at least 1.</p>");
+                out.println("<p>" + iosqlclass.esc(problem) + "</p>");
             } else {
                 out.println("<h1>Purchase order created</h1>");
-                out.println("<p>PO no: PO-" + (System.currentTimeMillis() % 10000) + "</p>");
-                out.println("<p>Supplier: " + supplier + "</p>");
-                if (found == -1) {
-                    out.println("<p>Product: " + id + " (new product, not in catalog yet)</p>");
-                    out.println("<p>Quantity: " + qty + "</p>");
-                } else {
-                    out.println("<p>Product: " + names[found] + "</p>");
-                    out.println("<p>Quantity: " + qty + "</p>");
-                    out.println("<p>Estimated cost at current price: PHP " + String.format("%.2f", prices[found] * qty) + "</p>");
-                }
+                out.println("<p>PO no: " + iosqlclass.esc(order[0]) + "</p>");
+                out.println("<p>Supplier: " + iosqlclass.esc(supplier) + "</p>");
+                out.println("<p>Product: " + iosqlclass.esc(order[1]) + "</p>");
+                out.println("<p>Quantity: " + qty + "</p>");
+                out.println("<p>Estimated cost at current price: PHP " + String.format("%.2f", Double.parseDouble(order[2]) * qty) + "</p>");
                 out.println("<p>Status: Ordered</p>");
             }
             out.println("<p><a href='inventory.jsp'>Back to Inventory</a> | <a href='index.jsp'>Index</a></p>");
             out.println("</body>");
             out.println("</html>");
+        }
+    }
+
+    // Saves the purchase order (a purchase_orders row and its purchase_order_items row).
+    // Returns { PO no, product name, unit cost } when saved.
+    // Returns { "", reason } when the supplier or product is not found.
+    private String[] savePurchaseOrder(String supplierName, String code, int qty, int employeeId) throws SQLException {
+        iosqlclass db = new iosqlclass();
+        try (Connection conn = db.getConnection()) {
+
+            // Find the supplier by name
+            int supplierId = -1;
+            try (PreparedStatement ps = conn.prepareStatement("SELECT supplier_id FROM suppliers WHERE name = ?")) {
+                ps.setString(1, supplierName);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        supplierId = rs.getInt("supplier_id");
+                    }
+                }
+            }
+            if (supplierId == -1) {
+                return new String[]{"", "Supplier " + supplierName + " was not found. Add it on the Suppliers page first."};
+            }
+
+            // Find the product by its ID (code)
+            int productId = -1;
+            String productName = "";
+            double unitCost = 0;
+            try (PreparedStatement ps = conn.prepareStatement("SELECT product_id, name, price FROM products WHERE code = ?")) {
+                ps.setString(1, code);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        productId = rs.getInt("product_id");
+                        productName = rs.getString("name");
+                        unitCost = rs.getDouble("price");
+                    }
+                }
+            }
+            if (productId == -1) {
+                return new String[]{"", "Product ID " + code + " was not found. Add it on the Inventory page first."};
+            }
+
+            // Save everything or nothing
+            conn.setAutoCommit(false);
+            try {
+                // the purchase order (status starts as Ordered)
+                int poId = -1;
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "INSERT INTO purchase_orders (supplier_id, created_by, order_date, status) "
+                        + "VALUES (?, ?, CURDATE(), 'Ordered')", Statement.RETURN_GENERATED_KEYS)) { // generates the database keys immediately
+                    ps.setInt(1, supplierId);
+                    ps.setInt(2, employeeId);
+                    ps.executeUpdate();
+                    try (ResultSet keys = ps.getGeneratedKeys()) { // grabs the generated key 
+                        if (keys.next()) {
+                            poId = keys.getInt(1); // sets poId into the generated key
+                        }
+                    }
+                }
+                if (poId == -1) {
+                    throw new SQLException("No po_id was returned for the new purchase order.");
+                }
+
+                // the ordered product (the current price is used as the unit cost)
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "INSERT INTO purchase_order_items (po_id, product_id, quantity, unit_cost) VALUES (?, ?, ?, ?)")) {
+                    ps.setInt(1, poId); // insert into 
+                    ps.setInt(2, productId);
+                    ps.setInt(3, qty);
+                    ps.setDouble(4, unitCost);
+                    ps.executeUpdate();
+                }
+                conn.commit();
+                return new String[]{String.format("PO-%03d", poId), productName, String.valueOf(unitCost)};
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
         }
     }
 
