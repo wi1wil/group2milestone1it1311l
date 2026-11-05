@@ -61,9 +61,19 @@ public class registeruser extends HttpServlet {
                 out.println("</html>");
                 return;
             }
-            if (role == null) {
-                role = "customer";
+            // Public registration always makes a customer.
+            // Only a logged-in admin (from addemployee.jsp) may choose another role.
+            HttpSession session = request.getSession(false);
+            String me = null;
+            if (session != null) {
+                me = (String) session.getAttribute("role");
             }
+            boolean isAdmin = "admin".equals(me);
+            if (role == null || role.trim().isEmpty() || !isAdmin) {
+                // Admin left the role blank: staff default to cashier; everyone else is a customer
+                role = isAdmin && "employee".equals(request.getParameter("kind")) ? "cashier" : "customer";
+            }
+            role = role.trim();
             // Contact number and address are optional
             if (contact == null) {
                 contact = "";
@@ -106,7 +116,11 @@ public class registeruser extends HttpServlet {
                 out.println("<h1>Registration failed</h1>");
                 out.println("<p>" + iosqlclass.esc(problem) + "</p>");
             }
-            out.println("<p><a href='add.jsp'>Back to Registration</a> | <a href='index.jsp'>Index</a></p>");
+            if (isAdmin) {
+                out.println("<p><a href='addemployee.jsp'>Back to Add Employee</a> | <a href='users.jsp'>Users</a> | <a href='index.jsp'>Index</a></p>");
+            } else {
+                out.println("<p><a href='add.jsp'>Back to Registration</a> | <a href='index.jsp'>Index</a></p>");
+            }
             out.println("</body>");
             out.println("</html>");
         }
@@ -130,7 +144,7 @@ public class registeruser extends HttpServlet {
                     taken = rs.next();
                 }
             }
-            if (taken) { // ensures theres no duplicate, if there is then return message
+            if (taken) {
                 return "Username " + username + " is already taken.";
             }
 
@@ -163,11 +177,11 @@ public class registeruser extends HttpServlet {
                         }
                     }
                 }
-                if (uid == -1) { // if found no uid then insert unsucessful
+                if (uid == -1) {
                     throw new SQLException("No u_id was returned for the new user.");
                 }
 
-                // Add into the customers row or the employees row
+                // Step 2: the customers row or the employees row
                 if (role.equals("customer")) {
                     try (PreparedStatement ps = conn.prepareStatement(
                             "INSERT INTO customers (u_id, username, password, first_name, last_name, contact_num, address) "
@@ -245,3 +259,4 @@ public class registeruser extends HttpServlet {
     }// </editor-fold>
 
 }
+    

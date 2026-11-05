@@ -17,6 +17,7 @@
         <jsp:include page="nav.html" />
         <img src="images/user.jpg" width="400" height="400" alt="alt"/>
         <h1>Register yourself!</h1>
+        <p>New accounts are customer accounts. Staff accounts are created by an administrator.</p>
         <%-- Registration: sends the new account details --%>
         <form method='POST' action='do.register'>
             <p><label>Input your username:</label>
@@ -37,16 +38,6 @@
 
             <p><label>Address (optional):</label>
             <input type='text' name='address'></p>
-
-            <p><label>Role:</label>
-            <%-- Role of the new account --%>
-            <select name='role'>
-                <option value='customer'>Customer</option>
-                <option value='cashier'>Cashier</option>
-                <option value='inventory'>Inventory</option>
-                <option value='technician'>Technician</option>
-                <option value='admin'>Administrator</option>
-            </select></p>
 
             <%-- Pick an avatar image --%>
             <label>

@@ -36,6 +36,6 @@
             <input type="submit" value="Remove user">
         </form>
 
-        <p><a href="add.jsp">Register a new account</a> | <a href="admin.jsp">Back to Admin</a></p>
+        <p><a href="addemployee.jsp">Add an employee / account</a> | <a href="admin.jsp">Back to Admin</a></p>
     </body>
 </html>
