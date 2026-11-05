@@ -29,7 +29,7 @@ public class accessfilter implements Filter {
 
     static {
         // Open to everyone (also logged out)
-        String[] open = {"/", "/home.jsp", "/login.jsp", "/add.jsp", "/nav.html",
+        String[] open = {"/", "/index.jsp", "/home.jsp", "/login.jsp", "/add.jsp", "/nav.html",
             "/products.jsp", "/pcbuilder.jsp", "/do.products", "/do.searchproduct", "/do.checkbuild",
             "/do.authenticate", "/do.register", "/do.logout"};
         for (String p : open) {
@@ -64,7 +64,7 @@ public class accessfilter implements Filter {
 
         // Admin only: users, reports, prices, promos
         String[] admin = {"/admin.jsp", "/users.jsp", "/addemployee.jsp", "/reports.jsp",
-            "/do.users", "/do.removeuser", "/do.reports", "/do.editprice", "/do.setpromo", "/index.jsp"};
+            "/do.users", "/do.removeuser", "/do.reports", "/do.editprice", "/do.setpromo"};
         for (String p : admin) {
             RULES.put(p, "admin");
         }
