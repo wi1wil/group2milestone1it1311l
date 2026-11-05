@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.sql.*;
 
 /**
  *
@@ -47,10 +48,13 @@ public class registeruser extends HttpServlet {
             String username = request.getParameter("username");
             String password = request.getParameter("password");
             String role = request.getParameter("role");
-            String idx = request.getParameter("idx");
+            String firstName = request.getParameter("firstname");
+            String lastName = request.getParameter("lastname");
+            String contact = request.getParameter("contact");
+            String address = request.getParameter("address");
 
             // Stop if the page was opened directly, without the form data
-            if (username == null || password == null) {
+            if (username == null || password == null || firstName == null || lastName == null) {
                 out.println("<p>No form data received. Please use the form.</p>");
                 out.println("<a href='add.jsp'>Go to Registration</a>");
                 out.println("</body>");
@@ -60,35 +64,144 @@ public class registeruser extends HttpServlet {
             if (role == null) {
                 role = "customer";
             }
-            if (idx == null) {
-                idx = "none";
+            // Contact number and address are optional
+            if (contact == null) {
+                contact = "";
+            }
+            if (address == null) {
+                address = "";
+            }
+            username = username.trim();
+            firstName = firstName.trim();
+            lastName = lastName.trim();
+            contact = contact.trim();
+            address = address.trim();
+
+            // problem stays empty when everything works
+            String problem = "";
+
+            // Validate the input first
+            if (username.isEmpty() || password.isEmpty() || firstName.isEmpty() || lastName.isEmpty()) {
+                problem = "Username, password, first name and last name are required.";
+            } else if (username.length() > 50 || password.length() > 50 || firstName.length() > 50 || lastName.length() > 50) {
+                problem = "Username, password and names can be 50 characters at most.";
+            } else if (contact.length() > 20 || address.length() > 100) {
+                problem = "Contact number can be 20 characters and address 100 characters at most.";
+            } else {
+                // Save the account in the database
+                try {
+                    problem = saveAccount(username, password, role, firstName, lastName, contact, address);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    problem = "Could not save to the database. Please try again.";
+                }
             }
 
-            // The sample usernames cannot be registered again
-            boolean reserved = username.equals("admin") || username.equals("cashier") || username.equals("inventory")
-                    || username.equals("technician") || username.equals("customer");
-
-            // Validate, then save the account in the application scope
-            if (username.trim().isEmpty() || password.isEmpty()) {
-                out.println("<h1>Registration failed</h1>");
-                out.println("<p>Username and password are required.</p>");
-            } else if (reserved || getServletContext().getAttribute("pass_" + username) != null) {
-                out.println("<h1>Registration failed</h1>");
-                out.println("<p>Username " + username + " is already taken.</p>");
-            } else {
-                // remember the account while the server is running
-                getServletContext().setAttribute("pass_" + username, password);
-                getServletContext().setAttribute("role_" + username, role);
+            if (problem.isEmpty()) {
                 out.println("<h1>Registration successful</h1>");
-                out.println("<p>Username: " + username + "</p>");
-                out.println("<p>Role: " + role + "</p>");
-                out.println("<p>Avatar chosen: " + idx + "</p>");
+                out.println("<p>Username: " + iosqlclass.esc(username) + "</p>");
+                out.println("<p>Role: " + iosqlclass.esc(role) + "</p>");
                 out.println("<a href='login.jsp'>Go to Login</a>");
+            } else {
+                out.println("<h1>Registration failed</h1>");
+                out.println("<p>" + iosqlclass.esc(problem) + "</p>");
             }
             out.println("<p><a href='add.jsp'>Back to Registration</a> | <a href='index.jsp'>Index</a></p>");
             out.println("</body>");
             out.println("</html>");
         }
+    }
+
+    // Saves the account: a users row, then an employees row (staff) or a customers row.
+    // Returns "" when saved, otherwise the reason it was not saved.
+    private String saveAccount(String username, String password, String role, String firstName,
+            String lastName, String contact, String address) throws SQLException {
+        iosqlclass db = new iosqlclass();
+        try (Connection conn = db.getConnection()) {
+
+            // The username must not be used by any employee or customer
+            boolean taken = false;
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT username FROM employees WHERE username = ? "
+                    + "UNION SELECT username FROM customers WHERE username = ?")) {
+                ps.setString(1, username);
+                ps.setString(2, username);
+                try (ResultSet rs = ps.executeQuery()) {
+                    taken = rs.next();
+                }
+            }
+            if (taken) { // ensures theres no duplicate, if there is then return message
+                return "Username " + username + " is already taken.";
+            }
+
+            // Find the role id (admin, cashier, inventory, technician, customer)
+            int roleId = -1;
+            try (PreparedStatement ps = conn.prepareStatement("SELECT role_id FROM roles WHERE role_name = ?")) {
+                ps.setString(1, role);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        roleId = rs.getInt("role_id");
+                    }
+                }
+            }
+            if (roleId == -1) {
+                return "Unknown role: " + role;
+            }
+
+            // Save everything or nothing
+            conn.setAutoCommit(false);
+            try {
+                // Step 1: the users row (the database gives it a new u_id)
+                int uid = -1;
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "INSERT INTO users (role) VALUES (?)", Statement.RETURN_GENERATED_KEYS)) {
+                    ps.setInt(1, roleId);
+                    ps.executeUpdate();
+                    try (ResultSet keys = ps.getGeneratedKeys()) {
+                        if (keys.next()) {
+                            uid = keys.getInt(1);
+                        }
+                    }
+                }
+                if (uid == -1) { // if found no uid then insert unsucessful
+                    throw new SQLException("No u_id was returned for the new user.");
+                }
+
+                // Add into the customers row or the employees row
+                if (role.equals("customer")) {
+                    try (PreparedStatement ps = conn.prepareStatement(
+                            "INSERT INTO customers (u_id, username, password, first_name, last_name, contact_num, address) "
+                            + "VALUES (?, ?, ?, ?, ?, ?, ?)")) {
+                        ps.setInt(1, uid);
+                        ps.setString(2, username);
+                        ps.setString(3, password);
+                        ps.setString(4, firstName);
+                        ps.setString(5, lastName);
+                        // Blank optional fields are saved as NULL
+                        ps.setString(6, contact.isEmpty() ? null : contact);
+                        ps.setString(7, address.isEmpty() ? null : address);
+                        ps.executeUpdate();
+                    }
+                } else {
+                    try (PreparedStatement ps = conn.prepareStatement(
+                            "INSERT INTO employees (u_id, role_name, username, password, first_name, last_name, status) "
+                            + "VALUES (?, ?, ?, ?, ?, ?, 'active')")) {
+                        ps.setInt(1, uid);
+                        ps.setString(2, role);
+                        ps.setString(3, username);
+                        ps.setString(4, password);
+                        ps.setString(5, firstName);
+                        ps.setString(6, lastName);
+                        ps.executeUpdate();
+                    }
+                }
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
+        }
+        return "";
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">

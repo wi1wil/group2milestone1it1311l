@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.sql.*;
 
 /**
  *
@@ -58,6 +59,12 @@ public class addproduct extends HttpServlet {
                 out.println("</html>");
                 return;
             }
+            if (category == null) {
+                category = "";
+            }
+            id = id.trim();
+            name = name.trim();
+            category = category.trim();
 
             // Convert price and stock to numbers (-1 means invalid)
             double price = -1;
@@ -70,29 +77,112 @@ public class addproduct extends HttpServlet {
                 stock = -1;
             }
 
-            // Validate the input, then show the result
-            if (id.trim().isEmpty() || name.trim().isEmpty()) {
-                out.println("<h1>Product not added</h1>");
-                out.println("<p>Product ID and name are required.</p>");
+            // problem stays empty when the product is saved
+            String problem = "";
+
+            // Validate the input, then save it
+            if (id.isEmpty() || name.isEmpty() || category.isEmpty()) {
+                problem = "Product ID, name and category are required.";
+            } else if (id.length() > 50 || name.length() > 100 || category.length() > 50) {
+                problem = "Product ID and category can be 50 characters and the name 100 characters at most.";
             } else if (price < 0 || stock < 0) {
-                out.println("<h1>Product not added</h1>");
-                out.println("<p>Price must be a number and stock must be a whole number (0 or more).</p>");
+                problem = "Price must be a number and stock must be a whole number (0 or more).";
             } else {
+                try {
+                    problem = saveProduct(id, name, category, price, stock);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    problem = "Could not save to the database. Please try again.";
+                }
+            }
+
+            if (problem.isEmpty()) {
                 out.println("<h1>Product added</h1>");
-                out.println("<p>ID: " + id + "</p>");
-                out.println("<p>Name: " + name + "</p>");
-                out.println("<p>Category: " + category + "</p>");
+                out.println("<p>ID: " + iosqlclass.esc(id) + "</p>");
+                out.println("<p>Name: " + iosqlclass.esc(name) + "</p>");
+                out.println("<p>Category: " + iosqlclass.esc(category) + "</p>");
                 out.println("<p>Price: PHP " + String.format("%.2f", price) + "</p>");
                 out.println("<p>Stock: " + stock + "</p>");
                 // Low stock alert is 5 or fewer
                 if (stock <= 5) {
                     out.println("<p><b>LOW STOCK ALERT:</b> 5 or fewer items.</p>");
                 }
+            } else {
+                out.println("<h1>Product not added</h1>");
+                out.println("<p>" + iosqlclass.esc(problem) + "</p>");
             }
             out.println("<p><a href='inventory.jsp'>Back to Inventory</a> | <a href='index.jsp'>Index</a></p>");
             out.println("</body>");
             out.println("</html>");
         }
+    }
+
+    // Saves the product in the products table. Returns "" when saved, otherwise the reason it was not saved.
+    private String saveProduct(String code, String name, String category, double price, int stock) throws SQLException {
+        iosqlclass db = new iosqlclass();
+        try (Connection conn = db.getConnection()) {
+
+            // The product ID (code) must be new
+            boolean exists = false;
+            try (PreparedStatement ps = conn.prepareStatement("SELECT product_id FROM products WHERE code = ?")) {
+                ps.setString(1, code);
+                try (ResultSet rs = ps.executeQuery()) {
+                    exists = rs.next();
+                }
+            }
+            if (exists) {
+                return "Product ID " + code + " already exists.";
+            }
+
+            // Save everything or nothing
+            conn.setAutoCommit(false);
+            try {
+                // Find the category, or add it when it is new
+                int categoryId = -1;
+                try (PreparedStatement ps = conn.prepareStatement("SELECT category_id FROM categories WHERE name = ?")) {
+                    ps.setString(1, category);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            categoryId = rs.getInt("category_id");
+                        }
+                    }
+                }
+                if (categoryId == -1) {
+                    try (PreparedStatement ps = conn.prepareStatement(
+                            "INSERT INTO categories (name) VALUES (?)", Statement.RETURN_GENERATED_KEYS)) {
+                        ps.setString(1, category);
+                        ps.executeUpdate();
+                        try (ResultSet keys = ps.getGeneratedKeys()) {
+                            if (keys.next()) {
+                                categoryId = keys.getInt(1);
+                            }
+                        }
+                    }
+                }
+                if (categoryId == -1) {
+                    throw new SQLException("No category_id was returned for the new category.");
+                }
+
+                // Add the product
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "INSERT INTO products (category_id, code, name, price, stock_quantity, status) "
+                        + "VALUES (?, ?, ?, ?, ?, 'active')")) {
+                    ps.setInt(1, categoryId);
+                    ps.setString(2, code);
+                    ps.setString(3, name);
+                    ps.setDouble(4, price);
+                    ps.setInt(5, stock);
+                    ps.executeUpdate();
+                }
+                // commit
+                conn.commit();
+            } catch (SQLException e) {
+                // rollsback if something goes wrong
+                conn.rollback();
+                throw e;
+            }
+        }
+        return "";
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">

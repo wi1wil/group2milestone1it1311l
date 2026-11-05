@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.sql.*;
 
 /**
  *
@@ -55,24 +56,68 @@ public class addsupplier extends HttpServlet {
                 out.println("</html>");
                 return;
             }
+            name = name.trim();
             // Contact is optional
             if (contact == null || contact.trim().isEmpty()) {
                 contact = "no contact given";
             }
+            contact = contact.trim();
+
+            // problem stays empty when the supplier is saved
+            String problem = "";
 
             // Name is required
-            if (name.trim().isEmpty()) {
-                out.println("<h1>Supplier not added</h1>");
-                out.println("<p>Supplier name is required.</p>");
+            if (name.isEmpty()) {
+                problem = "Supplier name is required.";
+            } else if (name.length() > 100 || contact.length() > 20) {
+                problem = "Supplier name can be 100 characters and contact 20 characters at most.";
             } else {
+                try {
+                    problem = saveSupplier(name, contact);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    problem = "Could not save to the database. Please try again.";
+                }
+            }
+
+            if (problem.isEmpty()) {
                 out.println("<h1>Supplier added</h1>");
-                out.println("<p>Name: " + name + "</p>");
-                out.println("<p>Contact: " + contact + "</p>");
+                out.println("<p>Name: " + iosqlclass.esc(name) + "</p>");
+                out.println("<p>Contact: " + iosqlclass.esc(contact) + "</p>");
+            } else {
+                out.println("<h1>Supplier not added</h1>");
+                out.println("<p>" + iosqlclass.esc(problem) + "</p>");
             }
             out.println("<p><a href='suppliers.jsp'>Back to Suppliers</a> | <a href='inventory.jsp'>Inventory</a> | <a href='index.jsp'>Index</a></p>");
             out.println("</body>");
             out.println("</html>");
         }
+    }
+
+    // Saves the supplier in the suppliers table. Returns "" when saved, otherwise the reason it was not saved.
+    private String saveSupplier(String name, String contact) throws SQLException {
+        iosqlclass db = new iosqlclass();
+        try (Connection conn = db.getConnection()) {
+
+            // The supplier name must be new
+            boolean exists = false;
+            try (PreparedStatement ps = conn.prepareStatement("SELECT supplier_id FROM suppliers WHERE name = ?")) {
+                ps.setString(1, name);
+                try (ResultSet rs = ps.executeQuery()) {
+                    exists = rs.next();
+                }
+            }
+            if (exists) {
+                return "Supplier " + name + " already exists.";
+            }
+
+            try (PreparedStatement ps = conn.prepareStatement("INSERT INTO suppliers (name, contact) VALUES (?, ?)")) {
+                ps.setString(1, name);
+                ps.setString(2, contact);
+                ps.executeUpdate();
+            }
+        }
+        return "";
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">

@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.sql.*;
 
 /**
  *
@@ -43,13 +44,6 @@ public class editprice extends HttpServlet {
             out.println("</head>");
             out.println("<body>");
 
-            // Temporary product data (same list as tempdata.java), replace with a database later
-            String[] ids = {"CPU-001", "CPU-002", "MB-001", "MB-002", "RAM-001", "RAM-002", "GPU-001", "SSD-001", "PSU-001", "CASE-001", "COOL-001"};
-            String[] names = {"AMD Ryzen 5 7600", "Intel Core i5-12400F", "ASRock B650M Pro RS", "MSI PRO B660M-A DDR4", "Kingston Fury 16GB DDR5-5600", "Corsair Vengeance 16GB DDR4-3200", "RTX 4060 8GB", "Samsung 980 1TB", "Corsair CV650 650W", "Tecware Forge M2 (mATX)", "Deepcool AK400"};
-            String[] categories = {"CPU", "CPU", "Motherboard", "Motherboard", "RAM", "RAM", "GPU", "Storage", "Power Supply", "Case", "CPU Cooler"};
-            double[] prices = {12500, 8900, 8200, 6900, 3200, 2300, 19500, 4200, 3800, 2900, 1500};
-            int[] stocks = {15, 3, 8, 4, 20, 2, 6, 12, 9, 5, 10};
-
             // Read the form fields
             String id = request.getParameter("productid");
             String newPriceText = request.getParameter("newprice");
@@ -62,6 +56,7 @@ public class editprice extends HttpServlet {
                 out.println("</html>");
                 return;
             }
+            id = id.trim();
 
             // Convert the new price to a number (-1 means invalid)
             double newPrice = -1;
@@ -71,33 +66,78 @@ public class editprice extends HttpServlet {
                 newPrice = -1;
             }
 
-            // Find the product ID in the list (-1 means not found)
-            int found = -1;
-            for (int i = 0; i < ids.length; i++) {
-                if (ids[i].equalsIgnoreCase(id.trim())) {
-                    found = i;
+            // product = { name, old price }, or null when the product ID is not found
+            String[] product = null;
+            String problem = "";
+
+            if (newPrice < 0) {
+                problem = "New price must be a number of 0 or more.";
+            } else if (id.isEmpty()) {
+                problem = "Product ID is required.";
+            } else {
+                try {
+                    product = changePrice(id, newPrice);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    problem = "Could not save to the database. Please try again.";
+                }
+                if (product == null && problem.isEmpty()) {
+                    problem = "Product ID " + id + " was not found.";
                 }
             }
 
-            if (newPrice < 0) {
+            if (product == null) {
                 out.println("<h1>Price not changed</h1>");
-                out.println("<p>New price must be a number of 0 or more.</p>");
-            } else if (found == -1) {
-                out.println("<h1>Price not changed</h1>");
-                out.println("<p>Product ID " + id + " was not found.</p>");
+                out.println("<p>" + iosqlclass.esc(problem) + "</p>");
             } else {
-                // Show the old price, new price and the change (not saved yet)
-                double difference = newPrice - prices[found];
-                double percent = difference / prices[found] * 100;
+                // Show the old price, new price and the change
+                double oldPrice = Double.parseDouble(product[1]);
+                double difference = newPrice - oldPrice;
+                double percent = 0;
+                if (oldPrice > 0) {
+                    percent = difference / oldPrice * 100;
+                }
                 out.println("<h1>Price updated</h1>");
-                out.println("<p>Product: " + names[found] + "</p>");
-                out.println("<p>Old price: PHP " + String.format("%.2f", prices[found]) + "</p>");
+                out.println("<p>Product: " + iosqlclass.esc(product[0]) + "</p>");
+                out.println("<p>Old price: PHP " + String.format("%.2f", oldPrice) + "</p>");
                 out.println("<p>New price: PHP " + String.format("%.2f", newPrice) + "</p>");
                 out.println("<p>Change: " + String.format("%.2f", difference) + " (" + String.format("%.1f", percent) + "%)</p>");
             }
             out.println("<p><a href='admin.jsp'>Back to Admin</a> | <a href='index.jsp'>Index</a></p>");
             out.println("</body>");
             out.println("</html>");
+        }
+    }
+
+    // Changes the price in the products table.
+    // Returns { product name, old price }, or null when the product ID is not found.
+    private String[] changePrice(String code, double newPrice) throws SQLException {
+        iosqlclass db = new iosqlclass();
+        try (Connection conn = db.getConnection()) {
+
+            // Find the product and its current price
+            String name = null;
+            double oldPrice = 0;
+            try (PreparedStatement ps = conn.prepareStatement("SELECT name, price FROM products WHERE code = ?")) {
+                ps.setString(1, code);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        name = rs.getString("name");
+                        oldPrice = rs.getDouble("price");
+                    }
+                }
+            }
+            if (name == null) {
+                return null;
+            }
+
+            // Save the new price
+            try (PreparedStatement ps = conn.prepareStatement("UPDATE products SET price = ? WHERE code = ?")) {
+                ps.setDouble(1, newPrice);
+                ps.setString(2, code);
+                ps.executeUpdate();
+            }
+            return new String[]{name, String.valueOf(oldPrice)};
         }
     }
 

@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.sql.*;
 
 /**
  *
@@ -54,31 +55,95 @@ public class removeuser extends HttpServlet {
                 out.println("</html>");
                 return;
             }
+            username = username.trim();
 
-            // The sample usernames are fixed and cannot be removed
-            boolean sample = username.equals("admin") || username.equals("cashier") || username.equals("inventory")
-                    || username.equals("technician") || username.equals("customer");
+            // null checks
+            HttpSession session = request.getSession(false);
+            String me = null;
+            if (session != null) {
+                me = (String) session.getAttribute("user");
+            }
 
-            if (username.trim().isEmpty()) {
-                out.println("<h1>User not removed</h1>");
-                out.println("<p>Username is required.</p>");
-            } else if (sample) {
-                out.println("<h1>User not removed</h1>");
-                out.println("<p>" + username + " is a sample account and cannot be removed.</p>");
-            } else if (getServletContext().getAttribute("pass_" + username) == null) {
-                out.println("<h1>User not removed</h1>");
-                out.println("<p>No account named " + username + " was found.</p>");
+            // problem stays empty when the user is removed
+            String problem = "";
+
+            if (username.isEmpty()) { // if no username is given 
+                problem = "Username is required.";
+            } else if (username.equalsIgnoreCase(me)) { // removing current logged in user
+                problem = "You cannot remove the account you are logged in with.";
             } else {
-                // forget the account that registeruser saved in the application scope
-                getServletContext().removeAttribute("pass_" + username);
-                getServletContext().removeAttribute("role_" + username);
+                try { // try removing the account first
+                    problem = removeAccount(username);
+                } catch (SQLIntegrityConstraintViolationException e) {
+                    // The user is used by other tables (sales, builds, promos, purchase orders)
+                    problem = username + " has records in the system, so the account cannot be removed.";
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    problem = "Could not remove from the database. Please try again.";
+                }
+            }
+
+            if (problem.isEmpty()) {
                 out.println("<h1>User removed</h1>");
-                out.println("<p>Username: " + username + "</p>");
+                out.println("<p>Username: " + iosqlclass.esc(username) + "</p>");
+            } else {
+                out.println("<h1>User not removed</h1>");
+                out.println("<p>" + iosqlclass.esc(problem) + "</p>");
             }
             out.println("<p><a href='users.jsp'>Back to Users</a> | <a href='admin.jsp'>Admin</a> | <a href='index.jsp'>Index</a></p>");
             out.println("</body>");
             out.println("</html>");
         }
+    }
+
+    // Removes the account: the employees or customers row first, then its users row.
+    private String removeAccount(String username) throws SQLException {
+        iosqlclass db = new iosqlclass();
+        try (Connection conn = db.getConnection()) {
+
+            int uid = -1;
+            String table = "employees"; // try selecting from employees tables first
+            try (PreparedStatement ps = conn.prepareStatement("SELECT u_id FROM employees WHERE username = ?")) {
+                ps.setString(1, username);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        uid = rs.getInt("u_id"); // sets the uid else goes down
+                    }
+                }
+            }
+            if (uid == -1) { // if not found in employees then  select from customers
+                table = "customers";
+                try (PreparedStatement ps = conn.prepareStatement("SELECT u_id FROM customers WHERE username = ?")) {
+                    ps.setString(1, username);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            uid = rs.getInt("u_id");
+                        }
+                    }
+                }
+            }
+            if (uid == -1) {
+                return "No account named " + username + " was found.";
+            }
+
+            // Remove everything or nothing
+            conn.setAutoCommit(false);
+            try {
+                try (PreparedStatement ps = conn.prepareStatement("DELETE FROM " + table + " WHERE u_id = ?")) { // deleting customers or employees depending on which one was runned above
+                    ps.setInt(1, uid);
+                    ps.executeUpdate();
+                }
+                try (PreparedStatement ps = conn.prepareStatement("DELETE FROM users WHERE u_id = ?")) { // ithen delete from users table
+                    ps.setInt(1, uid);
+                    ps.executeUpdate();
+                }
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
+        }
+        return "";
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">

@@ -3,3 +3,4 @@ dist/
 nbproject/private/
 *.class
 db.properties
+src/java/uap/asia/model/group2sql.properties

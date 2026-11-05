@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.sql.*;
 
 /**
  *
@@ -32,57 +33,7 @@ public class authenticateuser extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        
-        String usninput = request.getParameter("usn");
-        String passinput = request.getParameter("pass");
-        boolean isLoginValid = true;
-        String htmloutput = "";
-        
-        if (usninput == null || passinput == null || usninput.isEmpty() || passinput.isEmpty()) {
-            isLoginValid = false;
-        }
-        
-        /*
-
-        // Check the sample accounts first (username and password are the same)
-        String role = "";
-        if (usn.equals("admin") && pass.equals("admin")) {
-            role = "admin";
-        } else if (usn.equals("cashier") && pass.equals("cashier")) {
-            role = "cashier";
-        } else if (usn.equals("inventory") && pass.equals("inventory")) {
-            role = "inventory";
-        } else if (usn.equals("technician") && pass.equals("technician")) {
-            role = "technician";
-        } else if (usn.equals("customer") && pass.equals("customer")) {
-            role = "customer";
-        } else {
-            // accounts made on the registration page
-            Object savedPass = getServletContext().getAttribute("pass_" + usn);
-            Object savedRole = getServletContext().getAttribute("role_" + usn);
-            if (savedPass != null && savedPass.toString().equals(pass)) {
-                role = savedRole.toString();
-            }
-        }
-
-        // Empty role means the login failed
-        if (role.equals("")) {
-            out.println("<h1>Login failed</h1>");
-            out.println("<p>Wrong username or password.</p>");
-            out.println("<a href='login.jsp'>Try again</a>");
-        } else {
-            // Remember the logged-in user and role in the session
-            HttpSession session = request.getSession();
-            session.setAttribute("user", usn);
-            session.setAttribute("role", role);
-            out.println("<h1>Login successful</h1>");
-            out.println("<p>Welcome, " + usn + "!</p>");
-            out.println("<p>Your role: " + role + "</p>");
-            out.println("<p><a href='" + role + ".jsp'>Go to my " + role + " page</a></p>");
-            out.println("<a href='home.jsp'>Go to Home</a>");
-        }
-        */
-        
+        // Builds the whole HTML page; used by both GET and POST
         response.setContentType("text/html;charset=UTF-8");
         try (PrintWriter out = response.getWriter()) {
             out.println("<!DOCTYPE html>");
@@ -92,10 +43,120 @@ public class authenticateuser extends HttpServlet {
             out.println("<link rel=\"stylesheet\" href=\"css/style.css\">");
             out.println("</head>");
             out.println("<body>");
-            out.println("<a href='index.jsp' class='indexbtn'>Back to index</a>");
+
+            // Read the form fields
+            String usn = request.getParameter("usn");
+            String pass = request.getParameter("pass");
+
+            // Stop if the page was opened directly, without the form data
+            if (usn == null || pass == null) {
+                out.println("<p>No form data received. Please use the form.</p>");
+                out.println("<a href='login.jsp'>Go to Login</a>");
+                out.println("</body>");
+                out.println("</html>");
+                return;
+            }
+            usn = usn.trim();
+
+            // account stays null when the login fails
+            String[] account = null;
+            String problem = "";
+
+            if (usn.isEmpty() || pass.isEmpty()) { // null checks
+                problem = "Username and password are required.";
+            } else {
+                // Look for the account in the database
+                try {
+                    account = findAccount(usn, pass);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    problem = "Could not reach the database. Please try again.";
+                }
+                if (account == null && problem.isEmpty()) {
+                    problem = "Wrong username or password.";
+                }
+            }
+
+            if (account == null) {
+                out.println("<h1>Login failed</h1>");
+                out.println("<p>" + iosqlclass.esc(problem) + "</p>");
+                out.println("<a href='login.jsp'>Try again</a>");
+            } else {
+                // account = { role, full name, id, "employee" or "customer", username }
+                String role = account[0];
+
+                // Start a fresh session for the logged-in user
+                HttpSession old = request.getSession(false);
+                if (old != null) {
+                    old.invalidate();
+                }
+                
+                HttpSession session = request.getSession();
+                session.setAttribute("user", account[4]);
+                session.setAttribute("role", role);
+                session.setAttribute("name", account[1]);
+                
+                if (account[3].equals("employee")) {
+                    // the other pages (cashier, promos, purchase orders) use e_id
+                    session.setAttribute("e_id", Integer.valueOf(account[2]));
+                } else {
+                    session.setAttribute("c_id", Integer.valueOf(account[2]));
+                }
+
+                out.println("<h1>Login successful</h1>");
+                out.println("<p>Welcome, " + iosqlclass.esc(account[1]) + "!</p>");
+                out.println("<p>Your role: " + iosqlclass.esc(role) + "</p>");
+                out.println("<p><a href='" + role + ".jsp'>Go to my " + iosqlclass.esc(role) + " page</a></p>");
+                out.println("<a href='home.jsp'>Go to Home</a>");
+            }
+            out.println("<p><a href='index.jsp'>Index</a></p>");
             out.println("</body>");
             out.println("</html>");
         }
+    }
+
+    // Checks the username and password in the employees table, then the customers table.
+    // Returns { role, full name, id, "employee" or "customer", username }, or null if it does not match.
+    private String[] findAccount(String usn, String pass) throws SQLException {
+        iosqlclass db = new iosqlclass();
+        try (Connection conn = db.getConnection()) {
+
+            // Staff: admin, cashier, inventory, technician
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT employee_id, role_name, username, password, first_name, last_name "
+                    + "FROM employees WHERE username = ?")) {
+                ps.setString(1, usn);
+                try (ResultSet rs = ps.executeQuery()) {
+                    // equals() checks the password with the exact upper and lower case
+                    if (rs.next() && rs.getString("password").equals(pass)) {
+                        return new String[]{
+                            rs.getString("role_name"),
+                            rs.getString("first_name") + " " + rs.getString("last_name"),
+                            String.valueOf(rs.getInt("employee_id")),
+                            "employee",
+                            rs.getString("username")};
+                    }
+                }
+            }
+
+            // Customers
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "SELECT customer_id, username, password, first_name, last_name "
+                    + "FROM customers WHERE username = ?")) {
+                ps.setString(1, usn);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next() && rs.getString("password").equals(pass)) {
+                        return new String[]{
+                            "customer",
+                            rs.getString("first_name") + " " + rs.getString("last_name"),
+                            String.valueOf(rs.getInt("customer_id")),
+                            "customer",
+                            rs.getString("username")};
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">

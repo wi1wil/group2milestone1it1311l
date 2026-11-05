@@ -31,7 +31,7 @@ public class iosqlclass {
     
     
     public void loadSQL(){
-        ResourceBundle sqlrb = ResourceBundle.getBundle("asia.uap.model.group2sql");
+        ResourceBundle sqlrb = ResourceBundle.getBundle("uap.asia.model.group2sql"); // fix this into uap.asia.model instead of asia.uap.model
         this.url = sqlrb.getString("url");
         this.user = sqlrb.getString("user");
         this.pass = sqlrb.getString("password");
@@ -48,7 +48,20 @@ public class iosqlclass {
     public iosqlclass() {
         loadSQL();
     }
-    
+
+    public Connection getConnection() throws SQLException { // Opens a connection to the database
+        loadClass();
+        return DriverManager.getConnection(url, user, pass);
+    }
+
+    public static String esc(String text) { // makes text safe to print in HTML
+        if (text == null) {
+            return "";
+        }
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                .replace("\"", "&quot;").replace("'", "&#39;");
+    }
+
     /*
     private boolean exists(OUAPStudentBean row) throws SQLException
     {
@@ -137,12 +150,6 @@ public class iosqlclass {
                 }
         }
         
-        // add update stuff here ifever
-        
+        // add update stuff here if ever   
     }
-    
-    
-    
-    
-    
 }

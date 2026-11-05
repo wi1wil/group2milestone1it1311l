@@ -25,6 +25,19 @@
             <p><label>Input your password: </label>
             <input type='text' name='password'></p>
 
+            <p><label>First name:</label>
+            <input type='text' name='firstname'></p>
+
+            <p><label>Last name:</label>
+            <input type='text' name='lastname'></p>
+
+            <%-- Contact number and address are optional (saved for customers) --%>
+            <p><label>Contact number (optional):</label>
+            <input type='text' name='contact'></p>
+
+            <p><label>Address (optional):</label>
+            <input type='text' name='address'></p>
+
             <p><label>Role:</label>
             <%-- Role of the new account --%>
             <select name='role'>

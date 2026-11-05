@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.sql.*;
 
 /**
  *
@@ -38,17 +39,10 @@ public class setpromo extends HttpServlet {
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
-            out.println("<title>Promo Result</title>");
+            out.println("<title>Set Promo Result</title>");
             out.println("<link rel=\"stylesheet\" href=\"css/style.css\">");
             out.println("</head>");
             out.println("<body>");
-
-            // Temporary product data (same list as tempdata.java), replace with a database later
-            String[] ids = {"CPU-001", "CPU-002", "MB-001", "MB-002", "RAM-001", "RAM-002", "GPU-001", "SSD-001", "PSU-001", "CASE-001", "COOL-001"};
-            String[] names = {"AMD Ryzen 5 7600", "Intel Core i5-12400F", "ASRock B650M Pro RS", "MSI PRO B660M-A DDR4", "Kingston Fury 16GB DDR5-5600", "Corsair Vengeance 16GB DDR4-3200", "RTX 4060 8GB", "Samsung 980 1TB", "Corsair CV650 650W", "Tecware Forge M2 (mATX)", "Deepcool AK400"};
-            String[] categories = {"CPU", "CPU", "Motherboard", "Motherboard", "RAM", "RAM", "GPU", "Storage", "Power Supply", "Case", "CPU Cooler"};
-            double[] prices = {12500, 8900, 8200, 6900, 3200, 2300, 19500, 4200, 3800, 2900, 1500};
-            int[] stocks = {15, 3, 8, 4, 20, 2, 6, 12, 9, 5, 10};
 
             // Read the form fields
             String promoName = request.getParameter("promoname");
@@ -66,6 +60,23 @@ public class setpromo extends HttpServlet {
             if (id == null) {
                 id = "";
             }
+            promoName = promoName.trim();
+            id = id.trim();
+
+            // The database keeps which employee created the promo, so the user must be logged in
+            HttpSession session = request.getSession(false);
+            Integer employeeId = null;
+            if (session != null) {
+                employeeId = (Integer) session.getAttribute("e_id");
+            }
+            if (employeeId == null) {
+                out.println("<h1>Promo not created</h1>");
+                out.println("<p>Please login as an employee first.</p>");
+                out.println("<a href='login.jsp'>Go to Login</a>");
+                out.println("</body>");
+                out.println("</html>");
+                return;
+            }
 
             // Convert the percent to a number (0 if invalid)
             double percent = 0;
@@ -75,38 +86,94 @@ public class setpromo extends HttpServlet {
                 percent = 0;
             }
 
-            // Find the product ID in the list (-1 means not found)
-            int found = -1;
-            for (int i = 0; i < ids.length; i++) {
-                if (ids[i].equalsIgnoreCase(id.trim())) {
-                    found = i;
+            // product = { name, price } of the promo product ({ "", "" } means all products),
+            // or null when the promo was not saved
+            String[] product = null;
+            String problem = "";
+
+            // Validate, then save the promo
+            if (promoName.isEmpty() || percent <= 0 || percent > 100) {
+                problem = "Give the promo a name and a percent from 1 to 100.";
+            } else if (promoName.length() > 100) {
+                problem = "Promo name can be 100 characters at most.";
+            } else {
+                try {
+                    product = savePromo(promoName, percent, id, employeeId);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    problem = "Could not save to the database. Please try again.";
+                }
+                if (product == null && problem.isEmpty()) {
+                    problem = "Product ID " + id + " was not found.";
                 }
             }
 
-            // Validate, then show the promo (not saved yet)
-            if (promoName.trim().isEmpty() || percent <= 0 || percent > 100) {
+            if (product == null) {
                 out.println("<h1>Promo not created</h1>");
-                out.println("<p>Give the promo a name and a percent from 1 to 100.</p>");
-            } else if (!id.trim().isEmpty() && found == -1) {
-                out.println("<h1>Promo not created</h1>");
-                out.println("<p>Product ID " + id + " was not found.</p>");
+                out.println("<p>" + iosqlclass.esc(problem) + "</p>");
             } else {
                 out.println("<h1>Promo created</h1>");
-                out.println("<p>Promo: " + promoName + "</p>");
+                out.println("<p>Promo: " + iosqlclass.esc(promoName) + "</p>");
                 out.println("<p>Discount: " + percent + "% off</p>");
                 // Blank product ID means the promo applies to all products
-                if (id.trim().isEmpty()) {
+                if (id.isEmpty()) {
                     out.println("<p>Applies to: ALL products</p>");
                 } else {
-                    double promoPrice = prices[found] - (prices[found] * percent / 100);
-                    out.println("<p>Applies to: " + names[found] + "</p>");
-                    out.println("<p>Regular price: PHP " + String.format("%.2f", prices[found]) + "</p>");
+                    double regular = Double.parseDouble(product[1]);
+                    double promoPrice = regular - (regular * percent / 100);
+                    out.println("<p>Applies to: " + iosqlclass.esc(product[0]) + "</p>");
+                    out.println("<p>Regular price: PHP " + String.format("%.2f", regular) + "</p>");
                     out.println("<p>Promo price: PHP " + String.format("%.2f", promoPrice) + "</p>");
                 }
             }
             out.println("<p><a href='admin.jsp'>Back to Admin</a> | <a href='index.jsp'>Index</a></p>");
             out.println("</body>");
             out.println("</html>");
+        }
+    }
+
+    // Saves the promo in the promos table.
+    // Returns { product name, product price } ({ "", "" } for a promo on all products),
+    // or null when the product ID is not found.
+    private String[] savePromo(String promoName, double percent, String code, int employeeId) throws SQLException {
+        iosqlclass db = new iosqlclass();
+        try (Connection conn = db.getConnection()) {
+
+            // A blank product ID means all products (product_id stays NULL)
+            int productId = -1;
+            String productName = "";
+            String productPrice = "";
+            if (!code.isEmpty()) {
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "SELECT product_id, name, price FROM products WHERE code = ?")) {
+                    ps.setString(1, code);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            productId = rs.getInt("product_id");
+                            productName = rs.getString("name");
+                            productPrice = String.valueOf(rs.getDouble("price"));
+                        }
+                    }
+                }
+                if (productId == -1) {
+                    return null;
+                }
+            }
+
+            // Save the promo
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO promos (product_id, created_by, name, percentage) VALUES (?, ?, ?, ?)")) {
+                if (productId == -1) {
+                    ps.setNull(1, Types.INTEGER);
+                } else {
+                    ps.setInt(1, productId);
+                }
+                ps.setInt(2, employeeId);
+                ps.setString(3, promoName);
+                ps.setDouble(4, percent);
+                ps.executeUpdate();
+            }
+            return new String[]{productName, productPrice};
         }
     }
 

@@ -30,12 +30,8 @@
         <h3>Create purchase order</h3>
         <%-- Create a purchase order --%>
         <form action="do.createpo" method="POST">
-            Supplier:
-            <%-- Suppliers are hardcoded for now (temporary data) --%>
-            <select name="supplier">
-                <option>TechSource Manila</option>
-                <option>PC Parts Hub</option>
-            </select>
+            <%-- Type the name of a supplier that is on the Suppliers page --%>
+            Supplier name: <input type="text" name="supplier">
             Product ID: <input type="text" name="productid">
             Quantity: <input type="text" name="quantity" value="10">
             <input type="submit" value="Create PO">
