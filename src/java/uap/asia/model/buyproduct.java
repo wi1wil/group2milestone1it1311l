@@ -3,16 +3,19 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
  */
 package uap.asia.model;
-
+ 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
+ 
 /**
  *
  * @author Group 2
@@ -20,16 +23,7 @@ import javax.servlet.http.HttpSession;
 // Customer buys a product (form on products.jsp). URL: /do.buyproduct
 @WebServlet(name = "buyproduct", urlPatterns = {"/do.buyproduct"})
 public class buyproduct extends HttpServlet {
-
-    /**
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
-     * methods.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
+ 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         // Builds the whole HTML page; used by both GET and POST
@@ -42,18 +36,11 @@ public class buyproduct extends HttpServlet {
             out.println("<link rel=\"stylesheet\" href=\"css/style.css\">");
             out.println("</head>");
             out.println("<body>");
-
-            // Temporary product data (same list as tempdata.java), replace with a database later
-            String[] ids = {"CPU-001", "CPU-002", "MB-001", "MB-002", "RAM-001", "RAM-002", "GPU-001", "SSD-001", "PSU-001", "CASE-001", "COOL-001"};
-            String[] names = {"AMD Ryzen 5 7600", "Intel Core i5-12400F", "ASRock B650M Pro RS", "MSI PRO B660M-A DDR4", "Kingston Fury 16GB DDR5-5600", "Corsair Vengeance 16GB DDR4-3200", "RTX 4060 8GB", "Samsung 980 1TB", "Corsair CV650 650W", "Tecware Forge M2 (mATX)", "Deepcool AK400"};
-            String[] categories = {"CPU", "CPU", "Motherboard", "Motherboard", "RAM", "RAM", "GPU", "Storage", "Power Supply", "Case", "CPU Cooler"};
-            double[] prices = {12500, 8900, 8200, 6900, 3200, 2300, 19500, 4200, 3800, 2900, 1500};
-            int[] stocks = {15, 3, 8, 4, 20, 2, 6, 12, 9, 5, 10};
-
+ 
             // Read the form fields
             String id = request.getParameter("productid");
             String qtyText = request.getParameter("quantity");
-
+ 
             // Stop if the page was opened directly, without the form data
             if (id == null || qtyText == null) {
                 out.println("<p>No form data received. Please use the form.</p>");
@@ -62,7 +49,8 @@ public class buyproduct extends HttpServlet {
                 out.println("</html>");
                 return;
             }
-
+            id = id.trim();
+ 
             // Convert quantity to a number (0 if invalid)
             int qty = 0;
             try {
@@ -70,78 +58,113 @@ public class buyproduct extends HttpServlet {
             } catch (NumberFormatException e) {
                 qty = 0;
             }
-
-            // Find the product ID in the list (-1 means not found)
-            int found = -1;
-            for (int i = 0; i < ids.length; i++) {
-                if (ids[i].equalsIgnoreCase(id.trim())) {
-                    found = i;
+ 
+            // result = { name, price each, stock left }, or { "", reason } when the order failed
+            String[] result = null;
+            String problem = "";
+ 
+            if (id.isEmpty()) {
+                problem = "Product ID is required.";
+            } else if (qty <= 0) {
+                problem = "Quantity must be a whole number of at least 1.";
+            } else {
+                try {
+                    result = buy(id, qty);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    problem = "Could not save to the database. Please try again.";
+                }
+                // When the order failed, result[0] is empty and the reason is in result[1]
+                if (result != null && result[0].isEmpty()) {
+                    problem = result[1];
+                    result = null;
                 }
             }
-
-            // Check quantity, product and stock, then compute the total
-            if (qty <= 0) {
+ 
+            if (result == null) {
                 out.println("<h1>Order failed</h1>");
-                out.println("<p>Quantity must be a whole number of at least 1.</p>");
-            } else if (found == -1) {
-                out.println("<h1>Order failed</h1>");
-                out.println("<p>Product ID " + id + " was not found.</p>");
-            } else if (qty > stocks[found]) {
-                out.println("<h1>Order failed</h1>");
-                out.println("<p>Only " + stocks[found] + " of " + names[found] + " in stock.</p>");
+                out.println("<p>" + iosqlclass.esc(problem) + "</p>");
             } else {
-                double total = prices[found] * qty;
+                double price = Double.parseDouble(result[1]);
                 out.println("<h1>Order confirmed</h1>");
                 out.println("<p>Order no: OR-" + (System.currentTimeMillis() % 100000) + "</p>");
-                out.println("<p>" + names[found] + " x " + qty + "</p>");
-                out.println("<p>Price each: PHP " + prices[found] + "</p>");
-                out.println("<p><b>Total: PHP " + String.format("%.2f", total) + "</b></p>");
-                out.println("<p>Stock left after this order: " + (stocks[found] - qty) + "</p>");
+                out.println("<p>" + iosqlclass.esc(result[0]) + " x " + qty + "</p>");
+                out.println("<p>Price each: PHP " + String.format("%.2f", price) + "</p>");
+                out.println("<p><b>Total: PHP " + String.format("%.2f", price * qty) + "</b></p>");
+                out.println("<p>Stock left after this order: " + result[2] + "</p>");
             }
             out.println("<p><a href='products.jsp'>Back to Products</a> | <a href='index.jsp'>Index</a></p>");
             out.println("</body>");
             out.println("</html>");
         }
     }
-
+ 
+    // Checks the product and stock, then subtracts the quantity from stock_quantity.
+    // Returns { name, price, stock left } when bought, or { "", reason } when not.
+    private String[] buy(String code, int qty) throws SQLException {
+        iosqlclass db = new iosqlclass();
+        try (Connection conn = db.getConnection()) {
+            // Save everything or nothing
+            conn.setAutoCommit(false);
+            try {
+                String name = null;
+                double price = 0;
+                int stock = 0;
+ 
+                // FOR UPDATE locks the row so two buyers cannot take the same stock
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "SELECT name, price, stock_quantity FROM products "
+                        + "WHERE code = ? AND status = 'active' FOR UPDATE")) {
+                    ps.setString(1, code);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            name = rs.getString("name");
+                            price = rs.getDouble("price");
+                            stock = rs.getInt("stock_quantity");
+                        }
+                    }
+                }
+                if (name == null) {
+                    conn.rollback();
+                    return new String[]{"", "Product ID " + code + " was not found."};
+                }
+                if (qty > stock) {
+                    conn.rollback();
+                    return new String[]{"", "Only " + stock + " of " + name + " in stock."};
+                }
+ 
+                try (PreparedStatement ps = conn.prepareStatement(
+                        "UPDATE products SET stock_quantity = stock_quantity - ? WHERE code = ?")) {
+                    ps.setInt(1, qty);
+                    ps.setString(2, code);
+                    ps.executeUpdate();
+                }
+                conn.commit();
+                return new String[]{name, String.valueOf(price), String.valueOf(stock - qty)};
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
+        }
+    }
+ 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     // GET and POST both run processRequest()
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
     }
-
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
+ 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
     }
-
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
+ 
     @Override
     public String getServletInfo() {
         return "Short description";
     }// </editor-fold>
-
+ 
 }

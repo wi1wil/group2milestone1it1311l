@@ -2,34 +2,29 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
  */
-package uap.asia.model;
 
+package uap.asia.model;
+ 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
+ 
 /**
  *
  * @author Group 2
  */
-// Lists purchase orders, filtered by status. URL: /do.purchaseorders
+// Lists purchase orders from the database, filtered by status. URL: /do.purchaseorders
 @WebServlet(name = "viewpurchaseorders", urlPatterns = {"/do.purchaseorders"})
 public class viewpurchaseorders extends HttpServlet {
-
-    /**
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
-     * methods.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
+ 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         // Builds the whole HTML page; used by both GET and POST
@@ -42,10 +37,10 @@ public class viewpurchaseorders extends HttpServlet {
             out.println("<link rel=\"stylesheet\" href=\"css/style.css\">");
             out.println("</head>");
             out.println("<body>");
-
+ 
             // Status picked in the dropdown ("all" shows everything)
             String status = request.getParameter("status");
-
+ 
             // Stop if the page was opened directly, without the form data
             if (status == null) {
                 out.println("<p>No form data received. Please use the form.</p>");
@@ -54,66 +49,74 @@ public class viewpurchaseorders extends HttpServlet {
                 out.println("</html>");
                 return;
             }
-
+            status = status.trim();
+ 
+            // One row per ordered product. The status filter is only added when a status was picked.
+            boolean showAll = status.equals("all") || status.isEmpty();
+            String sql = "SELECT po.po_id, s.name AS supplier, p.name AS product, i.quantity, po.status "
+                    + "FROM purchase_orders po "
+                    + "JOIN suppliers s ON po.supplier_id = s.supplier_id "
+                    + "JOIN purchase_order_items i ON i.po_id = po.po_id "
+                    + "JOIN products p ON i.product_id = p.product_id "
+                    + (showAll ? "" : "WHERE po.status = ? ")
+                    + "ORDER BY po.po_id DESC";
+ 
             out.println("<h1>Purchase orders</h1>");
             out.println("<table border='1'>");
             out.println("<tr><th>PO</th><th>Supplier</th><th>Product</th><th>Qty</th><th>Status</th></tr>");
             int count = 0;
-            // Loop through the temporary data and print the matching rows
-            for (int i = 0; i < tempdata.PURCHASEORDERS.length; i++) {
-                String[] o = tempdata.PURCHASEORDERS[i];
-                if (status.equals("all") || o[4].equals(status)) {
-                    out.println("<tr><td>" + o[0] + "</td><td>" + o[1] + "</td><td>" + o[2] + "</td><td>" + o[3]
-                            + "</td><td>" + o[4] + "</td></tr>");
-                    count++;
+ 
+            try {
+                iosqlclass db = new iosqlclass();
+                try (Connection conn = db.getConnection();
+                     PreparedStatement ps = conn.prepareStatement(sql)) {
+                    if (!showAll) {
+                        ps.setString(1, status);
+                    }
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            // Same PO number format as createpurchaseorder (PO-001)
+                            out.println("<tr><td>" + String.format("PO-%03d", rs.getInt("po_id"))
+                                    + "</td><td>" + iosqlclass.esc(rs.getString("supplier"))
+                                    + "</td><td>" + iosqlclass.esc(rs.getString("product"))
+                                    + "</td><td>" + rs.getInt("quantity")
+                                    + "</td><td>" + iosqlclass.esc(rs.getString("status"))
+                                    + "</td></tr>");
+                            count++;
+                        }
+                    }
                 }
+                out.println("</table>");
+                out.println("<p>" + count + " purchase order(s) found.</p>");
+            } catch (SQLException e) {
+                e.printStackTrace();
+                out.println("</table>");
+                out.println("<p>Could not load purchase orders from the database. Please try again.</p>");
             }
-            out.println("</table>");
-            out.println("<p>" + count + " purchase order(s) found.</p>");
+ 
             out.println("<p><a href='inventory.jsp'>Back to Inventory</a> | <a href='index.jsp'>Index</a></p>");
             out.println("</body>");
             out.println("</html>");
         }
     }
-
+ 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     // GET and POST both run processRequest()
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
     }
-
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
+ 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
     }
-
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
+ 
     @Override
     public String getServletInfo() {
         return "Short description";
     }// </editor-fold>
-
+ 
 }

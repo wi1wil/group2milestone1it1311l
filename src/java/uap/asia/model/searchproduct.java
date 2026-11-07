@@ -3,16 +3,19 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
  */
 package uap.asia.model;
-
+ 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-
+ 
 /**
  *
  * @author Group 2
@@ -20,16 +23,7 @@ import javax.servlet.http.HttpSession;
 // Searches products by text (form on products.jsp). URL: /do.searchproduct
 @WebServlet(name = "searchproduct", urlPatterns = {"/do.searchproduct"})
 public class searchproduct extends HttpServlet {
-
-    /**
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
-     * methods.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
+ 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         // Builds the whole HTML page; used by both GET and POST
@@ -42,14 +36,7 @@ public class searchproduct extends HttpServlet {
             out.println("<link rel=\"stylesheet\" href=\"css/style.css\">");
             out.println("</head>");
             out.println("<body>");
-
-            // Temporary product data (same list as tempdata.java), replace with a database later
-            String[] ids = {"CPU-001", "CPU-002", "MB-001", "MB-002", "RAM-001", "RAM-002", "GPU-001", "SSD-001", "PSU-001", "CASE-001", "COOL-001"};
-            String[] names = {"AMD Ryzen 5 7600", "Intel Core i5-12400F", "ASRock B650M Pro RS", "MSI PRO B660M-A DDR4", "Kingston Fury 16GB DDR5-5600", "Corsair Vengeance 16GB DDR4-3200", "RTX 4060 8GB", "Samsung 980 1TB", "Corsair CV650 650W", "Tecware Forge M2 (mATX)", "Deepcool AK400"};
-            String[] categories = {"CPU", "CPU", "Motherboard", "Motherboard", "RAM", "RAM", "GPU", "Storage", "Power Supply", "Case", "CPU Cooler"};
-            double[] prices = {12500, 8900, 8200, 6900, 3200, 2300, 19500, 4200, 3800, 2900, 1500};
-            int[] stocks = {15, 3, 8, 4, 20, 2, 6, 12, 9, 5, 10};
-
+ 
             // Text typed in the search box
             String q = request.getParameter("q");
             // Stop if the page was opened directly, without the form data
@@ -60,66 +47,73 @@ public class searchproduct extends HttpServlet {
                 out.println("</html>");
                 return;
             }
-
-            out.println("<h1>Search results for: " + q + "</h1>");
+            q = q.trim();
+ 
+            // Make % and _ typed by the user match as normal characters, then wrap in % for "contains"
+            String pattern = "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
+ 
+            // Match the text against ID (code), name, brand and category (LIKE ignores upper/lower case)
+            String sql = "SELECT p.code, p.name, c.name AS category, p.price, p.stock_quantity "
+                    + "FROM products p JOIN categories c ON p.category_id = c.category_id "
+                    + "WHERE p.status = 'active' "
+                    + "AND (p.code LIKE ? OR p.name LIKE ? OR p.brand LIKE ? OR c.name LIKE ?) "
+                    + "ORDER BY p.code";
+ 
+            out.println("<h1>Search results for: " + iosqlclass.esc(q) + "</h1>");
             out.println("<table border='1'>");
             out.println("<tr><th>ID</th><th>Name</th><th>Category</th><th>Price (PHP)</th><th>Stock</th></tr>");
             int count = 0;
-            for (int i = 0; i < ids.length; i++) {
-                // Match the text against ID, name and category (ignores upper/lower case)
-                String line = (ids[i] + " " + names[i] + " " + categories[i]).toLowerCase();
-                if (line.contains(q.trim().toLowerCase())) {
-                    out.println("<tr><td>" + ids[i] + "</td><td>" + names[i] + "</td><td>" + categories[i]
-                            + "</td><td>" + prices[i] + "</td><td>" + stocks[i] + "</td></tr>");
-                    count++;
+ 
+            try {
+                iosqlclass db = new iosqlclass();
+                try (Connection conn = db.getConnection();
+                     PreparedStatement ps = conn.prepareStatement(sql)) {
+                    for (int i = 1; i <= 4; i++) {
+                        ps.setString(i, pattern);
+                    }
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            out.println("<tr><td>" + iosqlclass.esc(rs.getString("code"))
+                                    + "</td><td>" + iosqlclass.esc(rs.getString("name"))
+                                    + "</td><td>" + iosqlclass.esc(rs.getString("category"))
+                                    + "</td><td>" + String.format("%.2f", rs.getDouble("price"))
+                                    + "</td><td>" + rs.getInt("stock_quantity")
+                                    + "</td></tr>");
+                            count++;
+                        }
+                    }
                 }
+                out.println("</table>");
+                out.println("<p>" + count + " product(s) found.</p>");
+            } catch (SQLException e) {
+                e.printStackTrace();
+                out.println("</table>");
+                out.println("<p>Could not search the database. Please try again.</p>");
             }
-            out.println("</table>");
-            out.println("<p>" + count + " product(s) found.</p>");
+ 
             out.println("<p><a href='products.jsp'>Back to Products</a> | <a href='index.jsp'>Index</a></p>");
             out.println("</body>");
             out.println("</html>");
         }
     }
-
+ 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     // GET and POST both run processRequest()
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
     }
-
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
+ 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         processRequest(request, response);
     }
-
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
+ 
     @Override
     public String getServletInfo() {
         return "Short description";
     }// </editor-fold>
-
+ 
 }
