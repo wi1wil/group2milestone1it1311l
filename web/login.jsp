@@ -20,7 +20,7 @@
         <%-- Login: sends the username and password --%>
         <form method="POST" action="do.authenticate">
             <p><label>Input your username: <input type='text' name='usn'></label></p>
-            <p><label>Input your password: <input type='text' name='pass'></label></p>
+            <p><label>Input your password: <input type='password' name='pass'></label></p>
             <p><input type='submit' name='btnSubmit' value='Submit'></p>
         </form>
         <p>Sample accounts (username / password): admin / admin, cashier / cashier,
