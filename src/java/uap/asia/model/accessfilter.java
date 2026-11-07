@@ -29,7 +29,7 @@ public class accessfilter implements Filter {
 
     static {
         // Open to everyone (also logged out)
-        String[] open = {"/", "/index.jsp", "/home.jsp", "/login.jsp", "/add.jsp", "/nav.html",
+        String[] open = {"/", "/index.jsp", "/home.jsp", "/login.jsp", "/add.jsp", "/nav.jsp",
             "/products.jsp", "/pcbuilder.jsp", "/do.products", "/do.searchproduct", "/do.checkbuild",
             "/do.authenticate", "/do.register", "/do.logout"};
         for (String p : open) {

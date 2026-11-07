@@ -14,8 +14,8 @@
         <link rel="stylesheet" href="css/style.css">
     </head>
     <body>
-        <%-- Shared navigation bar (nav.html) --%>
-        <jsp:include page="nav.html" />
+        <%-- Shared navigation bar (nav.jsp) --%>
+        <jsp:include page="nav.jsp" />
         <h1>AI Product Specification Verification</h1>
         <p>Compare a spec stored in the system with the manufacturer's spec.</p>
         <%-- Compare the stored spec with the manufacturer's spec --%>

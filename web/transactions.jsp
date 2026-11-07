@@ -12,8 +12,8 @@
         <link rel="stylesheet" href="css/style.css">
     </head>
     <body>
-        <%-- Shared navigation bar (nav.html) --%>
-        <jsp:include page="nav.html" />
+        <%-- Shared navigation bar (nav.jsp) --%>
+        <jsp:include page="nav.jsp" />
         <h1>Transaction History</h1>
         <%-- Filter the transaction list --%>
         <form action="do.transactions" method="GET">

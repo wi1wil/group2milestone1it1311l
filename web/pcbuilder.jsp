@@ -14,8 +14,8 @@
         <link rel="stylesheet" href="css/style.css">
     </head>
     <body>
-        <%-- Shared navigation bar (nav.html) --%>
-        <jsp:include page="nav.html" />
+        <%-- Shared navigation bar (nav.jsp) --%>
+        <jsp:include page="nav.jsp" />
         <h1>PC Builder</h1>
         <p>Pick one part per category. Try an AM5 CPU with an LGA1700 motherboard to see an incompatible result.</p>
 

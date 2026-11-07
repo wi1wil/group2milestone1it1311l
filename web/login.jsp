@@ -14,8 +14,8 @@
         <link rel="stylesheet" href="css/style.css">
     </head>
     <body>
-        <%-- Shared navigation bar (nav.html) --%>
-        <jsp:include page="nav.html" />
+        <%-- Shared navigation bar (nav.jsp) --%>
+        <jsp:include page="nav.jsp" />
         <h1>User login</h1>
         <%-- Login: sends the username and password --%>
         <form method="POST" action="do.authenticate">

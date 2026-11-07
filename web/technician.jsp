@@ -12,8 +12,8 @@
         <link rel="stylesheet" href="css/style.css">
     </head>
     <body>
-        <%-- Shared navigation bar (nav.html) --%>
-        <jsp:include page="nav.html" />
+        <%-- Shared navigation bar (nav.jsp) --%>
+        <jsp:include page="nav.jsp" />
         <h1>Technician - Job Orders</h1>
         <p><a href="do.joborders">View all job orders</a></p>
 

@@ -13,8 +13,8 @@
         <link rel="stylesheet" href="css/style.css">
     </head>
     <body>
-        <%-- Shared navigation bar (nav.html) --%>
-        <jsp:include page="nav.html" />
+        <%-- Shared navigation bar (nav.jsp) --%>
+        <jsp:include page="nav.jsp" />
         <img src="images/user.jpg" width="400" height="400" alt="alt"/>
         <h1>Register yourself!</h1>
         <p>New accounts are customer accounts. Staff accounts are created by an administrator.</p>
