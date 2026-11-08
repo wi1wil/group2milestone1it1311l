@@ -13,7 +13,7 @@
     </head>
     <body>
         <%-- Shared navigation bar (nav.html) --%>
-        <jsp:include page="nav.html" />
+        <jsp:include page="nav.jsp" />
         <h1>User Accounts</h1>
         <%-- Filter the user list by role --%>
         <form action="do.users" method="GET">

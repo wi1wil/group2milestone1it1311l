@@ -13,7 +13,7 @@
     </head>
     <body>
         <%-- Shared navigation bar (nav.html) --%>
-        <jsp:include page="nav.html" />
+        <jsp:include page="nav.jsp" />
         <h1>Product Catalog</h1>
 
         <h3>Search</h3>
@@ -41,12 +41,8 @@
             <input type="submit" value="Show products">
         </form>
 
-        <h3>Buy a product</h3>
-        <%-- Buy a product by ID and quantity --%>
-        <form action="do.buyproduct" method="POST">
-            Product ID: <input type="text" name="productid">
-            Quantity: <input type="text" name="quantity" value="1">
-            <input type="submit" value="Buy">
-        </form>
+        <%-- EDITED: no online buying. Purchases are paid at the cashier in the store. --%>
+        <p>To buy, bring the product code to the cashier. Want a full PC? Plan it in the
+            <a href="pcbuilder.jsp">PC Builder</a> and save it for the cashier.</p>
     </body>
 </html>

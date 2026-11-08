@@ -15,7 +15,7 @@
     </head>
     <body>
         <%-- Shared navigation bar (nav.html) --%>
-        <jsp:include page="nav.html" />
+        <jsp:include page="nav.jsp" />
         <h1>Administrator Page</h1>
         <ul>
             <li><a href="users.jsp">Manage user accounts</a></li>
@@ -47,6 +47,6 @@
 
         </table>
         
-        <a href="index.jsp">Back to index</a>
+        <a href="index.jsp" class="indexbtn">Back to menu</a>
     </body>
 </html>

@@ -1,197 +1,631 @@
-body {
-    background-color: #f4f1ea;
-    color: #2b2b2b;
-    font-family: "Segoe UI", Tahoma, Arial, sans-serif;
-    line-height: 1.5;
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 20px;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --bg: #0d0c12;
+    --surface: #17151f;
+    --surface-2: #1f1c2a;
+    --border: #2c2939;
+    --text: #f1eff7;
+    --muted: #a09bb0;
+    --accent: #ec4899;
+    --accent-2: #c026d3;
+    --blue: #22b8ff;
+    --good: #34d399;
+    --side: max(20px, calc((100vw - 1060px) / 2));
 }
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+    margin: 0;
+    padding: 0 var(--side) 60px;
+    color: var(--text);
+    font-family: "Inter", "Segoe UI", Tahoma, Arial, sans-serif;
+    line-height: 1.6;
+    background-color: var(--bg);
+    /* pink glow in the corner and a faint grid, like a "build" blueprint */
+    background-image:
+        radial-gradient(700px 400px at 90% -5%, rgba(236, 72, 153, 0.22), transparent 70%),
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: auto, 48px 48px, 48px 48px;
+    background-attachment: fixed;
+}
+
+::selection { background: var(--accent); color: #fff; }
 
 /* Headings */
-h1, h2, h3 {
-    color: #1f3a5f;
-}
+h1, h2, h3 { line-height: 1.2; letter-spacing: -0.02em; }
 
 h1 {
-    border-bottom: 2px solid #1f3a5f;
-    padding-bottom: 6px;
+    font-size: 2.2rem;
+    margin: 34px 0 18px;
 }
+
+h3 {
+    font-size: 1.1rem;
+    margin: 30px 0 10px;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+p { color: var(--muted); }
 
 /* Links */
 a {
-    color: #1f5fa8;
+    color: var(--blue);
     text-decoration: none;
+    transition: color 0.15s;
 }
 
-a:hover {
-    text-decoration: underline;
-}
+a:hover { color: #fff; }
 
-/* Navigation bar (nav.html) */
+hr { display: none; }
+
+/* ---------- Navigation bar ---------- */
 nav {
-    background-color: #1f3a5f;
-    padding: 10px 14px;
-    border-radius: 6px;
-    color: #ffffff;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 4px;
+    margin: 0 calc(var(--side) * -1);
+    padding: 12px var(--side);
+    background: rgba(13, 12, 18, 0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
 }
 
-nav a {
-    color: #ffffff;
-    margin: 0 4px;
+nav .brand {
+    margin-right: 14px;
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: -0.02em;
+    color: #fff;
 }
 
-hr {
-    border: none;
-    border-top: 1px solid #d6d0c2;
-    margin: 16px 0;
+nav .brand span { color: var(--accent); }
+
+nav .links { display: flex; flex-wrap: wrap; gap: 2px; flex: 1; }
+
+nav .links a {
+    padding: 6px 10px;
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 0.92rem;
+    font-weight: 500;
+    transition: background 0.15s, color 0.15s;
 }
 
-/* Tables */
+nav .links a:hover { background: var(--surface-2); color: #fff; }
+
+nav .links a.active { color: #fff; background: var(--surface-2); box-shadow: inset 0 -2px 0 var(--accent); }
+
+nav .account { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
+
+.badge {
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: rgba(236, 72, 153, 0.15);
+    color: var(--accent);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+/* ---------- Buttons ---------- */
+button, input[type="submit"], .btn {
+    display: inline-block;
+    padding: 9px 20px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+}
+
+button:hover, input[type="submit"]:hover, .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(236, 72, 153, 0.35);
+    filter: brightness(1.08);
+    color: #fff;
+}
+
+button:active, input[type="submit"]:active, .btn:active { transform: translateY(0); }
+
+.btn-ghost {
+    background: var(--surface);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.btn-ghost:hover { border-color: var(--accent); box-shadow: none; }
+
+/* ---------- Forms ---------- */
+form {
+    max-width: 100%;
+    margin: 0 0 16px;
+    padding: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    color: var(--muted);
+    transition: border-color 0.2s;
+}
+
+form:hover { border-color: #3d3950; }
+
+form p { margin: 0 0 14px; }
+
+form label { color: var(--muted); font-size: 0.92rem; }
+
+form input[type="submit"], form button { margin: 4px 0; }
+
+input[type="text"], input[type="password"], input:not([type]), select, textarea {
+    padding: 9px 12px;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    margin: 4px 14px 4px 4px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+/* Short fields so "Label: [box]" pairs stay on one line (login and register use full-width ones below) */
+form input[type="text"], form input[type="password"], form input:not([type]), form select { width: 130px; }
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.2);
+}
+
+form p input[type="text"], form p select { width: 100%; max-width: 380px; display: block; margin: 4px 0 0; }
+
+input[type="radio"] { accent-color: var(--accent); }
+
+/* ---------- Tables (the view pages) ---------- */
 table {
-    border-collapse: collapse;
     width: 100%;
-    background-color: #ffffff;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 12px 0 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
 }
 
-th, td {
-    border: 1px solid #d6d0c2;
-    padding: 8px 10px;
-    text-align: left;
-}
+th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid var(--border); }
 
 th {
-    background-color: #1f3a5f;
-    color: #ffffff;
+    background: var(--surface-2);
+    color: var(--muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
 }
 
-tr:nth-child(even) td {
-    background-color: #faf8f3;
-}
+tr:last-child td { border-bottom: none; }
 
-/* Forms */
-input, select, textarea {
-    font-family: inherit;
-    padding: 6px 8px;
-    border: 1px solid #b8b2a3;
-    border-radius: 4px;
-    margin: 3px 0;
-}
+tbody tr { transition: background 0.15s; }
 
-button, input[type="submit"] {
-    background-color: #1f5fa8;
-    color: #ffffff;
-    border: none;
-    border-radius: 4px;
-    padding: 7px 16px;
-    font-family: inherit;
-    cursor: pointer;
-}
+tbody tr:hover td { background: var(--surface-2); }
 
-button:hover, input[type="submit"]:hover {
-    background-color: #1f3a5f;
-}
+/* ---------- Lists and images ---------- */
+ul { padding-left: 20px; color: var(--muted); }
 
-/* Images */
+li { margin: 4px 0; }
+
 img {
     max-width: 100%;
     height: auto;
-    border-radius: 6px;
+    border-radius: 14px;
 }
 
-/* Back to index button */
+/* Back to index button used by a few pages */
 .indexbtn {
     display: inline-block;
-    padding: 4px 10px;
-    background-color: #cc0000;
-    color: white;
-    text-decoration: none;
-    border-radius: 4px;
-    font-size: 12px;
-}
-
-.indexbtn:hover {
-    background-color: #ff6666;
-    text-decoration: none;
-}
-
-/* Notification box */
-.error-notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-
-    background-color: #f8d7da;
-    color: #842029;
-
-    padding: 15px 20px;
+    padding: 6px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 8px;
-    width: 300px;
-
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    z-index: 9999;
+    color: var(--text);
+    font-size: 0.85rem;
 }
 
+.indexbtn:hover { border-color: var(--accent); color: #fff; }
 
-.success-notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
+/* ---------- Home / index page blocks ---------- */
+.hero {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 36px;
+    align-items: center;
+    padding: 44px 0 20px;
+}
 
-    background-color: #d7e6cb;
-    color: #007c00;
+.hero h1 {
+    margin: 10px 0 14px;
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    background: linear-gradient(135deg, #fff 40%, var(--accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
 
-    padding: 15px 20px;
+.hero img { width: 100%; max-height: 380px; object-fit: cover; border: 1px solid var(--border); }
+
+.eyebrow {
+    color: var(--accent);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+}
+
+.lead { font-size: 1.1rem; max-width: 520px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 26px; padding: 0; list-style: none; }
+
+.chips li {
+    margin: 0;
+    padding: 5px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text);
+    font-size: 0.85rem;
+}
+
+.chips li::before { content: "\2713\00a0"; color: var(--good); }
+
+.actions { display: flex; flex-wrap: wrap; gap: 12px; }
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin: 12px 0 30px;
+}
+
+.card {
+    padding: 22px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+    box-shadow: 0 12px 32px rgba(236, 72, 153, 0.15);
+}
+
+.card h3 { margin: 0 0 6px; color: #fff; text-transform: none; letter-spacing: -0.01em; font-size: 1.15rem; }
+
+.card p { margin: 0 0 12px; font-size: 0.9rem; }
+
+.card ul { list-style: none; padding: 0; margin: 0; }
+
+.card li a {
+    display: block;
+    padding: 7px 10px;
+    margin: 2px -10px;
     border-radius: 8px;
-    width: 300px;
-
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    z-index: 9999;
+    color: var(--text);
+    transition: background 0.15s, padding-left 0.15s;
 }
 
-/* d7e6cb */
+.card li a:hover { background: var(--surface-2); padding-left: 16px; color: var(--accent); }
 
-
-.notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-
-    background-color: #e7e7e7;
-    color: black;
-
-    padding: 15px 20px;
-    border-radius: 8px;
-    width: 300px;
-
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    z-index: 9999;
+@media (max-width: 760px) {
+    .hero { grid-template-columns: 1fr; padding-top: 24px; }
+    nav .account { width: 100%; }
 }
 
-.close-btn {
+/* =====================================================================
+   EDITED: the parts below are the cashier, PC builder and notification
+   styles, redone for the dark theme above (they use the same :root colours).
+   ===================================================================== */
+
+/* ---------- Small forms inside tables and button rows ----------
+   Every <form> gets a big box above. Forms that only hold a button or two
+   (Remove, Set qty, Refund, Choose CPU, ...) should sit in the line instead. */
+td form, .pb-inline, .inline-form, form[style*="display:inline"] {
+    display: inline-block;
+    margin: 0 4px 0 0;
+    padding: 0;
     background: none;
     border: none;
-    border-radius: 4px;
-    padding: 4px 9px;
+    border-radius: 0;
+    vertical-align: middle;
+}
+
+td form:hover, .pb-inline:hover, .inline-form:hover, form[style*="display:inline"]:hover { border: none; }
+
+td form input[type="submit"], td form button,
+.pb-inline input[type="submit"], .pb-inline button {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+}
+
+/* text boxes inside table forms (quantity, refund reason) stay small */
+td form input[type="text"] { width: 70px; margin: 2px 6px 2px 0; }
+
+td form input[name="reason"] { width: 140px; }
+td form label { white-space: nowrap; }
+
+/* the PC builder's Choose / Remove buttons stay side by side */
+td:has(> .pb-inline) { white-space: nowrap; }
+
+/* secondary buttons (Remove, Clear, Cancel order, and any submit/button with class btn-ghost)
+   look like the theme's .btn-ghost (input[type="submit"] above would otherwise win) */
+td form input[value="Remove"], input[value="Clear"], input[value="Cancel order"],
+input[type="submit"].btn-ghost, button.btn-ghost {
+    background: var(--surface-2);
+    border-color: var(--border);
+    color: var(--text);
+}
+
+td form input[value="Remove"]:hover, input[value="Clear"]:hover, input[value="Cancel order"]:hover,
+input[type="submit"].btn-ghost:hover, button.btn-ghost:hover {
+    border-color: var(--accent);
+    box-shadow: none;
+}
+
+/* search boxes (cashier products) are wider than the normal 130px fields */
+form input[name="q"] { width: 280px; max-width: 100%; }
+
+/* dropdowns that hold long names (suppliers, job statuses) */
+form select[name="supplierid"], form select[name="status"] { width: auto; min-width: 160px; }
+
+/* the cashier's employee line under the title */
+.cashierinfo {
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-size: 0.9rem;
+}
+
+.cashierinfo b { color: var(--text); }
+
+/* ---------- Notification box (top right, shows once) ---------- */
+.error-notification, .success-notification, .notification {
+    position: fixed;
+    top: 96px;               /* below the sticky nav */
+    right: 20px;
+    z-index: 9999;
+    width: 320px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--muted);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+    font-size: 0.92rem;
+}
+
+.success-notification { border-left-color: var(--good); }
+.error-notification { border-left-color: #f87171; }
+.notification { border-left-color: var(--blue); }
+
+.close-btn {
+    flex: none;
+    padding: 2px 9px;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    color: var(--muted);
     font-size: 18px;
+    line-height: 1;
     cursor: pointer;
-    color: #dc3545;
 }
 
 .close-btn:hover {
-    background-color: #dc3545;
-    color: white;
+    background: #dc3545;
+    color: #fff;
+    transform: none;
+    box-shadow: none;
+    filter: none;
 }
 
+/* ---------- Product cards (cashier and PC builder pickers) ---------- */
+.pos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 12px;
+    margin: 10px 0 15px;
+}
+
+/* one product card: a <label>, so clicking anywhere picks its radio button */
+.pos-card {
+    display: block;
+    position: relative;
+    padding: 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    color: var(--text);
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.pos-card:hover { transform: translateY(-2px); border-color: #4a4560; }
+
+/* the radio button sits in the top-left corner */
+.pos-card input[type="radio"] {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: auto;
+    margin: 0;
+}
+
+/* the chosen card glows pink */
+.pos-card:has(input:checked) {
+    border-color: var(--accent);
+    background: rgba(236, 72, 153, 0.08);
+    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.25);
+}
+
+.pos-card img {
+    width: 100%;
+    height: 110px;
+    object-fit: contain;
+    margin: 0 0 8px;
+    border: none;
+    border-radius: 10px;
+    background: #fff;        /* product photos and the placeholder look right on white */
+}
+
+.pos-name {
+    display: block;
+    min-height: 34px;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 0.9rem;
+    line-height: 1.3;
+}
+
+.pos-code, .pos-stock {
+    display: block;
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 0.75rem;
+}
+
+.pos-price {
+    display: block;
+    margin: 6px 0 2px;
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+.pos-price s { color: var(--muted); font-size: 0.8rem; }
+
+.pos-promo {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: rgba(236, 72, 153, 0.18);
+    color: var(--accent);
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+/* sold out / all already in the cart: greyed out and cannot be picked */
+.pos-card.pos-disabled { opacity: 0.4; cursor: not-allowed; }
+.pos-card.pos-disabled:hover { transform: none; border-color: var(--border); }
+
+/* the quantity + Add bar under the grid (stays visible while scrolling) */
+.pos-addbar {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0 -20px -20px;   /* stretch to the edges of the form box */
+    padding: 12px 20px;
+    background: rgba(23, 21, 31, 0.95);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid var(--border);
+    border-radius: 0 0 16px 16px;
+}
+
+.pos-addbar input[type="text"] { width: 70px; margin: 0 6px 0 0; }
+
+/* ---------- PC builder ---------- */
+/* the picker box that opens under the parts table */
+.pb-picker {
+    margin: 18px 0;
+    padding: 16px 18px;
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 16px;
+    box-shadow: 0 12px 32px rgba(236, 72, 153, 0.12);
+    scroll-margin-top: 90px;   /* "#picker" jumps here without hiding it under the sticky nav */
+}
+
+.pb-picker h3 { margin-top: 4px; color: var(--text); }
+.pb-picker h3 small { text-transform: none; letter-spacing: 0; }
+
+/* the picker's grid is already inside the picker box, so its form has no second box */
+.pb-picker form { margin: 0; padding: 0; background: none; border: none; }
+.pb-picker .pos-addbar { margin: 0 -18px -16px; padding: 12px 18px; }
+
+/* "won't fit" and "needs another part" notes on a card */
+.pb-nofit, .pb-needs {
+    display: block;
+    margin-top: 6px;
+    padding: 3px 6px;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    line-height: 1.3;
+}
+
+.pb-nofit { background: rgba(248, 113, 113, 0.15); color: #fca5a5; }
+.pb-needs { background: rgba(251, 191, 36, 0.15); color: #fcd34d; }
+
+/* compatibility results */
+.pb-pass { color: var(--good); font-weight: 700; }
+.pb-fail { color: #f87171; font-weight: 700; }
+.pb-warn { color: #fbbf24; font-weight: 700; }
+
+/* overall result line */
+.pb-result {
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.pb-result.ok { background: rgba(52, 211, 153, 0.12); border-color: rgba(52, 211, 153, 0.4); color: var(--good); }
+.pb-result.bad { background: rgba(248, 113, 113, 0.12); border-color: rgba(248, 113, 113, 0.4); color: #fca5a5; }
+.pb-result.wait { background: var(--surface); color: var(--muted); }
+
+/* ---------- Printing (the receipt's Print button) ----------
+   Paper gets black text on white, without the nav bar, buttons or forms. */
+@media print {
+    body { background: #fff; color: #000; padding: 0; }
+    nav, button, form, .indexbtn, .close-btn,
+    .error-notification, .success-notification, .notification { display: none !important; }
+    h1, h2, h3, p, td, th { color: #000 !important; }
+    table { background: #fff; border-color: #999; }
+    th { background: #eee; }
+    th, td { border-color: #999; }
+    a { color: #000; }
+}
+
+/* ---------- EDITED: product pictures ---------- */
+/* small picture in the Products page tables (white box, like the cards) */
+.product-thumb {
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+    background: #fff;
+    border-radius: 8px;
+    display: block;
+}

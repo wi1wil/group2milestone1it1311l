@@ -13,20 +13,18 @@
     </head>
     <body>
         <%-- Shared navigation bar (nav.html) --%>
-        <jsp:include page="nav.html" />
+        <jsp:include page="nav.jsp" />
         <h1>Customer Page</h1>
         <%-- Customer shortcuts --%>
         <ul>
-            <li><a href="products.jsp">Browse and buy products</a></li>
-            <li><a href="pcbuilder.jsp">Create a PC build / check parts compatibility</a></li>
+            <li><a href="products.jsp">Browse products</a></li>
+            <li><a href="pcbuilder.jsp">Plan a PC build, check compatibility and save it for the cashier</a></li>
             <li><a href="transactions.jsp">My transaction history</a></li>
         </ul>
 
         <h3>My PC build orders</h3>
-        <%-- Show the job orders of the entered customer --%>
+        <%-- EDITED: the job order page now knows who is logged in, so no username is typed --%>
         <form action="do.joborders" method="GET">
-            <label>Username: </label>
-            <input type="text" name="customer" value="customer">
             <input type="submit" value="Show my build orders">
         </form>
     </body>

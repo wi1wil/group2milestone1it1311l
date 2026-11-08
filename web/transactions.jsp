@@ -13,7 +13,7 @@
     </head>
     <body>
         <%-- Shared navigation bar (nav.html) --%>
-        <jsp:include page="nav.html" />
+        <jsp:include page="nav.jsp" />
         <h1>Transaction History</h1>
         <%-- Filter the transaction list --%>
         <form action="do.transactions" method="GET">

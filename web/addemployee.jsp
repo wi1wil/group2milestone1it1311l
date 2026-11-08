@@ -14,7 +14,7 @@
     </head>
     <body>
         <%-- Shared navigation bar (nav.html) --%>
-        <jsp:include page="nav.html" />
+        <jsp:include page="nav.jsp" />
         <h1>Add an employee or another account</h1>
         <%-- Same servlet as the registration; it only accepts a role from a logged-in admin --%>
         <form method='POST' action='do.register'>

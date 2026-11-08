@@ -1,6 +1,8 @@
 <%--
-    Document   : stock
+    Document   : stock (EDITED)
     Author     : Group 2
+    Changes    : the hardcoded PO dropdown was replaced by a link to the receive stock page (do.restock),
+                 which lists the real purchase orders from the database.
 --%>
 
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
@@ -13,7 +15,7 @@
     </head>
     <body>
         <%-- Shared navigation bar (nav.html) --%>
-        <jsp:include page="nav.html" />
+        <jsp:include page="nav.jsp" />
         <h1>Stock</h1>
 
         <h3>Stock levels (low stock alert at 5 or fewer)</h3>
@@ -28,16 +30,10 @@
         </form>
 
         <h3>Receive stock from a purchase order</h3>
-        <%-- Receive stock from a purchase order --%>
-        <form action="do.restock" method="POST">
-            <%-- Purchase orders are hardcoded for now (temporary data) --%>
-            <select name="po">
-                <option value="PO-001">PO-001 (10 x CPU-001)</option>
-                <option value="PO-002">PO-002 (20 x RAM-002)</option>
-            </select>
-            <input type="submit" value="Receive">
-        </form>
+        <%-- The receive page lists the purchase orders that are waiting (status Ordered) --%>
+        <p><a href="do.restock">Open the receive stock page</a> (the admin approves each delivery)</p>
+        <p><a href="do.createpo">Create a purchase order</a></p>
 
-        <p><a href="inventory.jsp">Back to Inventory</a> | <a href="index.jsp">Back to index</a></p>
+        <p><a href="inventory.jsp">Back to Inventory</a></p><p><a href="index.jsp" class="indexbtn">Back to menu</a></p>
     </body>
 </html>

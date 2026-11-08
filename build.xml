@@ -7,8 +7,8 @@
 <!-- the Compile on Save feature is turned off for the project. -->
 <!-- You can turn off the Compile on Save (or Deploy on Save) setting -->
 <!-- in the project's Project Properties dialog box.-->
-<project name="group2milestone1it1311l" default="default" basedir=".">
-    <description>Builds, tests, and runs the project group2milestone1it1311l.</description>
+<project name="group2it1311l" default="default" basedir=".">
+    <description>Builds, tests, and runs the project group2it1311l.</description>
     <import file="nbproject/build-impl.xml"/>
     <!--
 

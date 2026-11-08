@@ -1,6 +1,8 @@
 <%--
-    Document   : technician
+    Document   : technician (EDITED)
     Author     : Group 2
+    Changes    : the hardcoded job dropdown was replaced by the job order page (do.updatejob),
+                 which lists the real job orders and lets the technician edit the build and the status.
 --%>
 
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
@@ -13,28 +15,20 @@
     </head>
     <body>
         <%-- Shared navigation bar (nav.html) --%>
-        <jsp:include page="nav.html" />
+        <jsp:include page="nav.jsp" />
         <h1>Technician - Job Orders</h1>
-        <p><a href="do.joborders">View all job orders</a></p>
 
-        <h3>Update a job order</h3>
-        <%-- Update the status of a job order --%>
-        <form action="do.updatejob" method="POST">
-            <label>Job: </label>
-            <%-- Job IDs are hardcoded for now (temporary data) --%>
-            <select name="jobid">
-                <option>JOB-001</option>
-                <option>JOB-002</option>
-                <option>JOB-003</option>
-            </select>
-            <label>Status: </label>
-            <select name="status">
-                <option>Pending</option>
-                <option>In Progress</option>
-                <option>Success</option>
-            </select>
-            <input type="submit" value="Update">
+        <h3>Job orders</h3>
+        <p><a href="do.updatejob">View and update job orders</a> (change the parts of a build, or its status)</p>
+
+        <h3>Open a job directly</h3>
+        <%-- Opens one job order by its number --%>
+        <form action="do.updatejob" method="GET">
+            <label>Job no. (e.g. 1 or JO-001): </label>
+            <input type="text" name="jobid">
+            <input type="submit" value="Open">
         </form>
+
         <p><a href="pcbuilder.jsp">Open PC Builder / compatibility check</a></p>
     </body>
 </html>

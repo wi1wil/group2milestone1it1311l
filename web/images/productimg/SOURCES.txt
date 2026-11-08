@@ -1,0 +1,52 @@
+Product photos for the data (45 products).
+
+Each file is named <product code>.jpg, which matches products.image set by EDITED_product_images.sql.
+
+Photos belong to the listed manufacturers/retailers - for this school project only.
+
+CASE-001	Tecware Forge M2 (cartridgeworld.co.uk listing)	https://cdn11.bigcommerce.com/s-2e9j1bvyip/images/stencil/1280x1280/products/11988/78821/various-tecware-forge-m2-matx-pc-case-compact-high-airflow-mesh-front-panel-3-x-argb-fans-included-hinged-tempered-glass-door__95206.1789024036.jpg?c=1
+CASE-002	NZXT H Series H5 Flow 2024 Edition ATX Mid Tower Chassis All Black Color	https://c1.neweggimages.com/ProductImageCompressAll1280/11-146-365-04.png
+CASE-003	COOLER MASTER Elite 110 RC-110-KKN2 Midnight Black Steel / Plastic Mini-ITX Tower Computer Case	https://c1.neweggimages.com/ProductImageCompressAll1280/11-119-299-02.jpg
+CASE-004	Montech AIR 903 MAX, E-ATX Mid Tower Case, High Airflow, 3x 140mm ARGB PWM & 1x 140mm PWM Fans Pre-installed, Tempered Glass Side Panel, Mesh Front, TYPE-C, Support 4090 GPUs, Black	https://c1.neweggimages.com/ProductImageCompressAll1280/AK91S2308110FJ99WD3.jpg
+CASE-005	Lian Li A4-H2O Mini-ITX PC Case, Triple-Slot Mount GPU, Aluminum Exterior & SPCC Steel Interior, 240mm AIO, SFX Sandwich Layout, PCIe 5.0, Supports SFX/SFX-L PSU - (A4-H2OX5 Black )	https://c1.neweggimages.com/ProductImageCompressAll1280/AFSTS2601160IJEJPC1.jpg
+CASE-006	Darkflash DLM21 Mesh (darkflash.com)	https://darkflash-image-cloud.s3.us-west-2.amazonaws.com/cdn/product/cover/000000000000156/202403030012663.png
+CODE	MATCHED PRODUCT	SOURCE IMAGE
+COOL-001	DeepCool AK400 (deepcool.com)	https://cdn.deepcool.com/public/ProductFile/DEEPCOOL/Cooling/CPUAirCoolers/AK400/Gallery/800X800/01.jpg
+COOL-002	Thermalright Peerless Assassin 120 SE CPU Air Cooler,6 Heat Pipes Aluminium Heatsink Cover, for Intel 1700/115X/1200, AMD AM4/AM5	https://c1.neweggimages.com/ProductImageCompressAll1280/BVHXS24052407KAKNB6.jpg
+COOL-003	Cooler Master Hyper 212 Black CPU Air Cooler - 120mm High Performance PWM Fan, 4 Copper Heat Pipes, Aluminum Top Cover, Low Noise & Easy Installation, AMD AM5/AM4 & Intel LGA 1851/1700/1200, Black	https://c1.neweggimages.com/ProductImageCompressAll1280/35-103-364-01.png
+COOL-004	ARCTIC ACFRE00184A Liquid Freezer III Pro 360 A-RGB AIO CPU Cooler, Water Cooling 38 mm Radiator, AMD AM5/AM4, Intel LGA1851/1700 (Black)	https://c1.neweggimages.com/ProductImageCompressAll1280/A2W0S25040807Y0SB4E.jpg
+CPU-001	AMD Ryzen 5 7600 - Ryzen 5 7000 Series Zen 4 6-Core 3.8 GHz - Socket AM5 65W - AMD Radeon Graphics Processor - 100-100001015BOX	https://c1.neweggimages.com/ProductImageCompressAll1280/19-113-787-03.jpg
+CPU-002	Intel Core i5-12400F - Core i5 12th Gen Alder Lake 6-Core 2.5 GHz LGA 1700 65W Desktop Processor - BX8071512400F	https://c1.neweggimages.com/ProductImageCompressAll1280/19-118-360-08.jpg
+CPU-003	AMD Ryzen 7 7800X3D - Ryzen 7 7000 Series Zen 4 8-Core 4.2 GHz - Socket AM5 120W - AMD Radeon Graphics Desktop Processor - 100-100000910WOF	https://c1.neweggimages.com/ProductImageCompressAll1280/19-113-793-03.png
+CPU-004	Intel Core i3-12100 - Core i3 12th Gen Alder Lake Quad-Core 3.3 GHz LGA 1700 Processor 60W Intel UHD Graphics 730 Desktop Processor - BX8071512100	https://c1.neweggimages.com/ProductImageCompressAll1280/A24GD2203220DB6YE7D.jpg
+CPU-005	Intel Core i7-13700K - Core i7 13th Gen 16-Core (8P+8E) P-core Base Frequency: 3.4 GHz E-core Base Frequency: 2.5 GHz LGA 1700 125W Intel UHD Graphics 770 Desktop CPU Processor - BX8071513700K	https://c1.neweggimages.com/ProductImageCompressAll1280/19-118-414-V01.jpg
+CPU-006	AMD Ryzen 5 5600 - Ryzen 5 5000 Series 6-Core 3.5 GHz Socket AM4 65W None Integrated Graphics Desktop CPU Processor - 100-100000927BOX	https://c1.neweggimages.com/ProductImageCompressAll1280/19-113-736-V03.jpg
+CPU-007	AMD Ryzen 7 7700 - Ryzen 7 7000 Series Zen 4 8-Core 3.8 GHz - Socket AM5 65W - AMD Radeon Graphics Processor - 100-100000592BOX	https://c1.neweggimages.com/ProductImageCompressAll1280/19-113-786-04.jpg
+GPU-001	GIGABYTE GeForce RTX 4060 WINDFORCE OC 8G Graphics Card, 2x WINDFORCE Fans, 8GB 128-bit GDDR6, GV-N4060WF2OC-8GD  Video Card	https://c1.neweggimages.com/ProductImageCompressAll1280/14-932-630-17.jpg
+GPU-002	GIGABYTE GeForce RTX 4070 SUPER WINDFORCE OC 12G Graphics Card, 3x WINDFORCE Fans, 12GB 192-bit GDDR6X, GV-N407SWF3OC-12GD  Video Card	https://c1.neweggimages.com/ProductImageCompressAll1280/14-932-683-11.jpg
+GPU-003	ASRock Challenger Radeon RX 7600 8GB GDDR6 PCI Express 4.0 x8 ATX Graphics Card RX7600 CL 8GO	https://c1.neweggimages.com/ProductImageCompressAll1280/14-930-093-V03.jpg
+GPU-004	GIGABYTE GeForce RTX 4070 Ti SUPER WINDFORCE OC 16G Graphics Card, 3x WINDFORCE Fans, 16GB 256-bit GDDR6X, GV-N407TSWF3OC-16GD Video Card	https://c1.neweggimages.com/ProductImageCompressAll1280/14-932-678-03.jpg
+GPU-005	ASUS Phoenix GeForce GTX 1650 4GB GDDR6 PCI Express 3.0 Graphics Card PH-GTX1650-O4GD6	https://c1.neweggimages.com/ProductImageCompressAll1280/14-126-446-V01.jpg
+GPU-006	SAPPHIRE PULSE Radeon RX 7800 XT 16GB GDDR6 PCI Express 4.0 x16 ATX Graphics Card 11330-02-20G	https://c1.neweggimages.com/ProductImageCompressAll1280/14-202-434-11.jpg
+HDD-001	Seagate BarraCuda ST2000DM008 2TB 7200 RPM 256MB Cache SATA 6.0Gb/s 3.5" Hard Drive Bare Drive	https://c1.neweggimages.com/ProductImageCompressAll1280/22-184-773-V01.jpg
+MB-001	ASRock B650M PRO RS AM5 AMD B650 Micro ATX Motherboard	https://c1.neweggimages.com/ProductImageCompressAll1280/13-162-130-04.png
+MB-002	MSI PRO B660M-A DDR4 (msi.com)	https://storage-asset.msi.com/global/picture/product/product_1641286682988d0292648cde7a59850c1f730b2ad5.png
+MB-003	ASUS ROG STRIX X670E-E GAMING WIFI Socket AM5 AMD X670 DDR5 192GB ATX Motherboard	https://c1.neweggimages.com/ProductImageCompressAll1280/ARA8D2405170JX72058.jpg
+MB-004	GIGABYTE B760M DS3H DDR4 LGA 1700 Intel B760 M-ATX Motherboard with DDR4, Dual M.2, PCIe 4.0, USB 3.2 Gen 2 Type-C,  2.5GbE LAN, Q-Flash Plus, PCIe EZ-Latch	https://c1.neweggimages.com/ProductImageCompressAll1280/13-145-426-01.jpg
+MB-005	ASUS Prime B550M-A/CSM AMD AM4 (3rd Gen Ryzen) microATX Commercial Motherboard (PCIe 4.0, ECC Memory, 1Gb LAN, HDMI 2.1/D-Sub, 4K@60HZ, TPM, ASUS Control Center Express)	https://c1.neweggimages.com/ProductImageCompressAll1280/13-119-317-V07.jpg
+MB-006	MSI MAG B650 TOMAHAWK WIFI AM5 AMD B650 SATA 6Gb/s DDR5 Ryzen 7000 ATX Motherboard	https://c1.neweggimages.com/ProductImageCompressAll1280/13-144-557-08.jpg
+MB-007	ASRock B650I LIGHTNING WIFI AM5 Ryzen 7000 AMD B650 SATA 6Gb/s Mini-ITX s DDR5 7200+ (OC) 2.5G LAN x WiFi 6E + Bluetooth Motherboards - AMD	https://c1.neweggimages.com/ProductImageCompressAll1280/13-162-151-03.png
+PSU-001	Corsair CV650 (corsair.com)	https://res.cloudinary.com/corsair-pwa/image/upload/c_scale,q_auto,w_1000/products/Power-Supply-Units/CP-9020211-NA/Gallery/CV650_PSU_01.png
+PSU-002	Corsair CV450 (corsair.com)	https://res.cloudinary.com/corsair-pwa/image/upload/c_scale,q_auto,w_1000/products/Power-Supply-Units/CP-9020209-NA/Gallery/CV450_PSU_01.png
+PSU-003	SeaSonic FOCUS GX ATX 3 (2024) GX-750 White 750 W ATX 3.1 80 PLUS GOLD Certified Full Modular Power Supplies	https://c1.neweggimages.com/ProductImageCompressAll1280/17-151-273-01.jpg
+PSU-004	MSI MAG A550BN, Non-Modular Compact 550W Power Supply, 80+ Bronze, Low-Noise Fan, Active PFC Design, 5 Year Warranty	https://c1.neweggimages.com/ProductImageCompressAll1280/17-701-012-07.png
+PSU-005	CORSAIR RMe Series RM1000e 1000 W ATX 3.1 Compatible Cybenetics Gold Full Modular Power Supply	https://c1.neweggimages.com/ProductImageCompressAll1280/17-139-337-05.png
+RAM-001	Kingston FURY Beast 16GB (2 x 8GB) 288-Pin PC RAM DDR5 5600 (PC5 44800) Memory (Desktop Memory) Model KF556C40BBAK2-16	https://c1.neweggimages.com/ProductImageCompressAll1280/AFYUD2309010V5L3973.jpg
+RAM-002	CORSAIR Vengeance LPX 16GB (2 x 8GB) 288-Pin PC RAM DDR4 3200 (PC4 25600) Desktop Memory Model CMK16GX4M2E3200C16W	https://c1.neweggimages.com/ProductImageCompressAll1280/20-236-736-01.jpg
+RAM-003	G.SKILL Trident Z5 RGB Series 32GB (2 x 16GB) 288-Pin PC RAM DDR5 6000 (PC5 48000) Desktop Memory Model F5-6000J3636F16GX2-TZ5RK	https://c1.neweggimages.com/ProductImageCompressAll1280/20-374-351-10.png
+RAM-004	Team Elite 8GB 288-Pin PC RAM DDR4 3200 (PC4 25600) Desktop Memory Model TED48G3200C2201	https://c1.neweggimages.com/ProductImageCompressAll1280/20-331-525-V04.jpg
+RAM-005	Kingston FURY Beast 32GB (2 x 16GB) 288-Pin PC RAM DDR5 6000 (PC5 48000) Memory (Desktop Memory) Model KF560C30BBEAK2-32	https://c1.neweggimages.com/ProductImageCompressAll1280/20-242-737-01.jpg
+SSD-001	SAMSUNG 980 M.2 2280 1TB PCI-Express 3.0 x4, NVMe 1.4 V-NAND MLC Internal Solid State Drive (SSD) MZ-V8V1T0B/AM	https://c1.neweggimages.com/ProductImageCompressAll1280/20-147-804-V07.jpg
+SSD-002	Western Digital WD_Blue SN580 M.2 2280 1TB PCI-Express 4.0 x4 TLC Internal Solid State Drive (SSD) WDS100T3B0E	https://c1.neweggimages.com/ProductImageCompressAll1280/20-250-254-01.jpg
+SSD-003	Crucial MX500 500GB 3D NAND SATA 2.5 Inch Internal SSD, up to 560 MB/s  - CT500MX500SSD1	https://c1.neweggimages.com/ProductImageCompressAll1280/20-156-173-V01.jpg
+SSD-004	SAMSUNG Samsung 990 PRO 2TB, 3-bit MLC V-NAND, M.2 (2280), NVMe 2.0, R/W(Max) 7,450MB/s/6,900MB/s, 1,400K/1,550K IOPS, 1200TBW, 5 Years Warranty	https://c1.neweggimages.com/ProductImageCompressAll1280/BTSND24021603R47009.jpg

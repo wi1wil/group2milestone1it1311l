@@ -14,8 +14,7 @@
     </head>
     <body>
         <%-- Shared navigation bar (nav.html) --%>
-        <jsp:include page="nav.html" />
-        <img src="images/user.jpg" width="400" height="400" alt="alt"/>
+        <jsp:include page="nav.jsp" />
         <h1>Register yourself!</h1>
         <p>New accounts are customer accounts. Staff accounts are created by an administrator.</p>
         <%-- Registration: sends the new account details --%>
@@ -38,17 +37,6 @@
 
             <p><label>Address (optional):</label>
             <input type='text' name='address'></p>
-
-            <%-- Pick an avatar image --%>
-            <label>
-                    <img src="images/usr1.jpg" width="200" height="200" alt="alt"/>
-                    <input type='radio' name='idx' value='1'>
-            </label>
-
-            <label>
-                    <img src="images/usr2.jpg" width="200" height="200" alt="alt"/>
-                    <input type='radio' name='idx' value='2'>
-            </label>
 
             <p><input type='submit' name='btnSubmit' value='Submit!'></p>
         </form>

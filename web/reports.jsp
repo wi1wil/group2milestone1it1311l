@@ -13,7 +13,7 @@
     </head>
     <body>
         <%-- Shared navigation bar (nav.html) --%>
-        <jsp:include page="nav.html" />
+        <jsp:include page="nav.jsp" />
         <h1>Sales Report</h1>
         <%-- Choose which report to show --%>
         <form action="do.reports" method="GET">

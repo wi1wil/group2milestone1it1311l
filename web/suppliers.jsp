@@ -13,7 +13,7 @@
     </head>
     <body>
         <%-- Shared navigation bar (nav.html) --%>
-        <jsp:include page="nav.html" />
+        <jsp:include page="nav.jsp" />
         <h1>Suppliers</h1>
 
         <h3>Supplier list</h3>
@@ -27,6 +27,6 @@
             <input type="submit" value="Add supplier">
         </form>
 
-        <p><a href="inventory.jsp">Back to Inventory</a> | <a href="index.jsp">Back to index</a></p>
+        <p><a href="inventory.jsp">Back to Inventory</a></p><p><a href="index.jsp" class="indexbtn">Back to menu</a></p>
     </body>
 </html>
