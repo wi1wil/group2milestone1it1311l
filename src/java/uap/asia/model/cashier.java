@@ -4,6 +4,7 @@
  */
 package uap.asia.model;
 
+import uap.asia.classes.CartItem;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
@@ -46,11 +47,27 @@ public class cashier extends HttpServlet {
         Integer transactionid = -1;        
         LocalDateTime transtimestamp = LocalDateTime.now();
 
-        if (session != null) {
+        if (session.getAttribute("unpaidCart") != null) {
             cashier = (String) session.getAttribute("name");
             idnum = (Integer) session.getAttribute("e_id");
             transactionid = (Integer) session.getAttribute("sale_id");
             transtimestamp = (LocalDateTime) session.getAttribute("sale_date");
+            displayhtml += "<p> session not null </p>";
+        }
+        else if (session.getAttribute("unpaidCart") == null) {            
+            cashier = (String) session.getAttribute("name");
+            idnum = (Integer) session.getAttribute("e_id");
+            transactionid = (Integer) session.getAttribute("sale_id");
+            transtimestamp = (LocalDateTime) session.getAttribute("sale_date");
+            displayhtml += "<p> session null </p>";
+        }
+        
+        else if (("thisisandreimartinwilson").equals(request.getParameter("debugmode"))) {            
+            session.setAttribute("name", cashier);
+            session.setAttribute("e_id", idnum);
+            session.setAttribute("sale_id", transactionid);
+            session.setAttribute("sale_date", transtimestamp);
+            displayhtml += "<p> Dummy session </p>";
         }
         
         try (PrintWriter out = response.getWriter()) {
@@ -73,9 +90,20 @@ public class cashier extends HttpServlet {
                     "</b> | Timestamp: <b>" + transtimestamp + "</b></p>";
             
             out.println(cashierdetailshtml);
+            // Notification display
+            
+            String systemmessage = "";
+            String sysmsgclass = (String) session.getAttribute("sysmsgclass");
+            String sysmsgdesc = (String) session.getAttribute("sysmsgdesc");
+            CartItem latest = (CartItem) session.getAttribute("latestItem");
+            
+            out.println("<div class='" + sysmsgclass + "' id='" + sysmsgclass + "'>");
+            out.println(sysmsgdesc);
+            out.println("<button class='close-btn' onclick='closeNotification()'>&times;</button>");
+            out.println("</div>");
             
             // UI Display
-            displayhtml += "<form action=\"do.donecashier\" method=\"POST\">";
+            displayhtml += "<form action=\"do.processcashier\" method=\"POST\">";
             displayhtml += "<label>Input product ID: </label>\n" +
                     "<input type=\"text\" name=\"productid\"> <br> <br>";
 
@@ -84,12 +112,6 @@ public class cashier extends HttpServlet {
 
             displayhtml += "<label>Input quantity: </label>\n" +
                     "<input type=\"text\" name=\"productquantity\"> <br> <br>";
-
-            displayhtml += "<label>Discount (%): </label>\n" +
-                    "<input type=\"text\" name=\"discount\" value=\"0\"> <br> <br>";
-
-            displayhtml += "<label>Total: </label>\n" +
-                    "<input type=\"text\" name=\"total\"> <br> <br>";
 
             displayhtml += "\n" +
                     "<input type=\"submit\" name=\"actionbtn\" value=\"Next\">\n" +
@@ -108,6 +130,7 @@ public class cashier extends HttpServlet {
             out.println(displayhtml);
             
             out.println("<a href='index.jsp' class='indexbtn'>Back to index</a>");
+            out.println("<script src='javascript/script.js'></script>");
             out.println("</body>");
             out.println("</html>");
         }

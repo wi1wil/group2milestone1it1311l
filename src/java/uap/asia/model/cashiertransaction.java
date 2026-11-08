@@ -4,6 +4,10 @@
  */
 package uap.asia.model;
 
+import java.sql.*;
+import uap.asia.functionalclasses.*;
+import uap.asia.classes.CartItem;
+import java.util.ArrayList;
 import java.io.IOException;
 import java.io.PrintWriter;
 import javax.servlet.ServletException;
@@ -30,6 +34,150 @@ public class cashiertransaction extends HttpServlet {
      * @throws ServletException if a servlet-specific error occurs
      * @throws IOException if an I/O error occurs
      */
+    
+    // -------------------------------------------------------------------------------------
+
+    /*
+    // Next: validate, look up the product, save it in a CartItem, put it in the cart
+    private void addToCart(HttpServletRequest request, HttpSession session, ArrayList<CartItem> cart) {
+        String idText = request.getParameter("productid");
+        String qtyText = request.getParameter("productquantity");
+        String discountText = request.getParameter("discount");
+
+        // 1. Validate the form fields
+        if (!ParseThis.isInt(idText) || ParseThis.toInt(idText) <= 0) {
+            throw new IllegalArgumentException("Invalid product ID.");
+        }
+        if (!ParseThis.isInt(qtyText) || ParseThis.toInt(qtyText) <= 0) {
+            throw new IllegalArgumentException("Quantity must be a whole number of at least 1.");
+        }
+        double discount = 0;                       // nothing typed means no discount
+        if (discountText != null && !discountText.trim().isEmpty()) {
+            if (!ParseThis.isDouble(discountText)) {
+                throw new IllegalArgumentException("Discount must be a number from 0 to 100.");
+            }
+            discount = ParseThis.toDouble(discountText);
+        }
+        if (discount < 0 || discount > 100) {
+            throw new IllegalArgumentException("Discount must be a number from 0 to 100.");
+        }
+        int productId = ParseThis.toInt(idText);
+        int qty = ParseThis.toInt(qtyText);
+
+        // 2. Look up the product in the database: {product_id, code, name, price, stock}
+        String[] p = Sqlc.findProduct(productId);
+        if (p == null) {
+            throw new IllegalArgumentException("Product ID " + productId + " was not found.");
+        }
+        double price = Double.parseDouble(p[3]);
+        int stock = Integer.parseInt(p[4]);
+
+        // The same product stays on ONE line (SALE_ITEMS allows one row per product per sale)
+        int line = -1;
+        for (int i = 0; i < cart.size(); i++) {
+            if (cart.get(i).getProductid() == productId) {
+                line = i;
+            }
+        }
+        int inCart = (line == -1) ? 0 : cart.get(line).getItemquantity();
+        if (inCart + qty > stock) {
+            throw new IllegalArgumentException("Only " + stock + " of " + p[2] + " in stock"
+                    + (inCart > 0 ? " (" + inCart + " already in the cart)" : "") + ".");
+        }
+
+        // 3. Save the details in a CartItem object
+        CartItem item = new CartItem(productId, p[1], p[2], price, inCart + qty, discount);
+
+        // 4. Put the object in the ArrayList (replace the old line when the product was already there)
+        if (line == -1) {
+            cart.add(item);
+        } else {
+            cart.set(line, item);
+        }
+
+        // 5. The ArrayList is already in the session. Save the status for cashier.jsp.
+        session.setAttribute("latestItem", item);
+        message(session, "status-success", "Added " + qty + " x " + p[2] + " to the cart.");
+    }
+
+    // Remove: takes one line out of the cart
+    private void removeLine(HttpServletRequest request, HttpSession session, ArrayList<CartItem> cart) {
+        String indexText = request.getParameter("index");
+        if (!ParseThis.isInt(indexText)) {
+            throw new IllegalArgumentException("Invalid line.");
+        }
+        int index = ParseThis.toInt(indexText);
+        if (index < 0 || index >= cart.size()) {
+            throw new IllegalArgumentException("That line is not in the cart.");
+        }
+        CartItem removed = cart.remove(index);
+        session.removeAttribute("latestItem");
+        message(session, "status-success", "Removed " + removed.getProductcode() + " from the cart.");
+    }
+
+    // Done: check the payment, then save the sale (SALES, SALE_ITEMS, stock) in one transaction
+    private void finishSale(HttpServletRequest request, HttpSession session, ArrayList<CartItem> cart) throws SQLException {
+        if (cart.isEmpty()) {
+            throw new IllegalArgumentException("The cart is empty. Add an item first.");
+        }
+
+        // The employee who makes the sale (saved in the session at login)
+        int employeeId = UserSession.employeeId(session);
+        if (employeeId <= 0) {
+            throw new IllegalArgumentException("Please log in as an employee first.");
+        }
+
+        // The customer. Blank = the walk-in account.
+        String customerName = request.getParameter("customer");
+        boolean walkin = (customerName == null || customerName.trim().isEmpty());
+        String lookup = walkin ? WALKIN : customerName.trim();
+        String[] customer = Sqlc.selectOne("SELECT customer_id FROM customers WHERE username = ?", lookup);
+        if (customer == null) {
+            if (walkin) {
+                throw new IllegalArgumentException("The walk-in customer account (\"" + WALKIN
+                        + "\") is missing. Run sample-data.sql, or type a customer username.");
+            }
+            throw new IllegalArgumentException("Customer " + lookup + " was not found.");
+        }
+
+        // Total to pay
+        double total = 0;
+        for (CartItem item : cart) {
+            total += item.getSubtotal();
+        }
+        total = Math.round(total * 100.0) / 100.0;
+
+        // Payment (nothing typed means exact payment)
+        double paid = total;
+        String paidText = request.getParameter("paid");
+        if (paidText != null && !paidText.trim().isEmpty()) {
+            if (!ParseThis.isDouble(paidText)) {
+                throw new IllegalArgumentException("Amount paid must be a number.");
+            }
+            paid = ParseThis.toDouble(paidText);
+        }
+        if (Math.round(paid * 100) < Math.round(total * 100)) {
+            throw new IllegalArgumentException("Payment is short by PHP " + Html.money(total - paid) + ".");
+        }
+
+        // Payment method: only the ones in the dropdown
+        String method = request.getParameter("method");
+        if (method == null || !(method.equals("Cash") || method.equals("Card") || method.equals("GCash"))) {
+            method = "Cash";
+        }
+
+        // Save the sale. Throws IllegalArgumentException when the stock ran out in the meantime.
+        int saleId = Sqlc.saveSale(employeeId, Integer.parseInt(customer[0]), cart, paid, method);
+
+        cart.clear();                               // the next customer starts with an empty cart
+        session.removeAttribute("latestItem");
+        session.setAttribute("lastSaleId", saleId);
+        message(session, "status-success", "Sale #" + saleId + " saved. Total PHP " + Html.money(total)
+                + " | Paid PHP " + Html.money(paid) + " | Change PHP " + Html.money(paid - total));
+    }
+    */
+    // ------------------------------------------------------------------------------------------------------
+    
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         // Builds the whole HTML page; used by both GET and POST
@@ -60,6 +208,8 @@ public class cashiertransaction extends HttpServlet {
             if (isValid) {
                 switch(action) {
                     case "Next":
+                        addItem(request, session);
+                        
                         response.sendRedirect("cashier.jsp");
                         break;
                         
@@ -88,27 +238,7 @@ public class cashiertransaction extends HttpServlet {
                 return;
             }
             */
-
-            // Read the form fields
-            String id = request.getParameter("productid");
-            String priceText = request.getParameter("productprice");
-            String qtyText = request.getParameter("productquantity");
-            String discountText = request.getParameter("discount");
-            String paidText = request.getParameter("paid");
             
-            // create java object (productsOnCart) for each item
-            
-            /*
-            ArrayList (UNPAID) of said OBJECT
-            OBJECT receives: PRODUCT ID, PRICE, QUANTITY BOUGHT, DISCOUNT
-            OBJECT stored in ArrayList (UNPAID)
-            RECEIVE payment
-            ONCE SECURED, transfer obect from ArrayList (UNPAID) to ArrayList (PAID)
-                INCLUDES:
-                    decreament stock/quantity
-                    add to sales, sales_items
-                    
-            */
 
             // Stop if the page was opened directly, without the form data
             if (id == null || priceText == null || qtyText == null) {
@@ -182,6 +312,83 @@ public class cashiertransaction extends HttpServlet {
             out.println("</body>");
             out.println("</html>");
         }
+    }
+    
+    
+        
+            // create java object (productsOnCart) for each item
+            
+            /*
+            ArrayList (UNPAID) of said OBJECT
+            OBJECT receives: PRODUCT ID, PRICE, QUANTITY BOUGHT, DISCOUNT
+            OBJECT stored in ArrayList (UNPAID)
+            RECEIVE payment
+            ONCE SECURED, transfer obect from ArrayList (UNPAID) to ArrayList (PAID)
+                INCLUDES:
+                    decreament stock/quantity
+                    add to sales, sales_items
+                    
+            */
+    
+    private void addItem(HttpServletRequest request, HttpSession session) {       
+        
+        // validity here
+        boolean isValid = true;
+        
+        // Read the form fields
+        String id = request.getParameter("productid");
+        String priceText = request.getParameter("productprice");
+        Double productPrice = Sqlc.checkPrice(ParseThis.toInt(id));
+        String qtyText = request.getParameter("productquantity");
+        String discountText = request.getParameter("discount");
+        String paidText = request.getParameter("paid");
+        
+        Integer runningTotal = (Integer) session.getAttribute("total");
+
+        // checks if the product id is valid. else
+        if (Sqlc.checkProductId(ParseThis.toInt(id))) {            
+            CartItem item = new CartItem (ParseThis.toInt(id), productPrice, ParseThis.toInt(qtyText), ParseThis.toDouble(discountText));
+            ArrayList<CartItem> list = (ArrayList<CartItem>) getCart(session);
+            list.add(item);
+            session.setAttribute("unpaidCart", list);
+            message(session, "notification", "Successfully added " + Sqlc.checkProductName(ParseThis.toInt(id)) + " $" + productPrice);
+        }
+        else {
+            isValid = false;
+            // show error, no such product found
+            return;
+        }
+                
+        return;
+    }
+    
+    private void finishSale(HttpServletRequest request, HttpSession session) {
+        
+        boolean isValid = true;        
+        Double totalPrice = 0.0;
+        
+        ArrayList<CartItem> unpaidCart = (ArrayList<CartItem>) session.getAttribute("unpaidCart");
+        
+        for (CartItem i: unpaidCart){
+            totalPrice += i.getPrice();
+        }
+        
+    }
+   
+    
+    private ArrayList<CartItem> getCart(HttpSession session) {
+        ArrayList<CartItem> cart = (ArrayList<CartItem>) session.getAttribute("unpaidCart");
+        if (cart == null) {
+            cart = new ArrayList<>();
+            session.setAttribute("unpaidCart", cart);
+        }
+        return cart;
+    }
+
+    // The notification that cashier.jsp shows once (class = css class of the message)
+    private void message(HttpSession session, String cssClass, String text) {
+        session.setAttribute("sysmsgclass", cssClass);
+        session.setAttribute("sysmsgdesc", text);
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
